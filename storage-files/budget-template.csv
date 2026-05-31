@@ -1,0 +1,9 @@
+Sexsi Ayliq Budce,Planlasdirilan,Faktiki,Ferq
+CEMI GELIR,=SUM(B5:B8),=SUM(C5:C8),=C2-B2
+Teqaud/Maas,0,0,=C3-B3
+Valideyn destei,0,0,=C4-B4
+Frilans,0,0,=C5-B5
+Kiraye,0,0,=B6-C6
+Erzaq,0,0,=B7-C7
+Neqliyyat,0,0,=B8-C8
+QALIQ,=B2-SUM(B6:B8),=C2-SUM(C6:C8),

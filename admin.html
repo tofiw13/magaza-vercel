@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title><style>
+:root{--bg:#0b1120;--card:#161f33;--card2:#1f2a44;--accent:#22c55e;--accent2:#6366f1;--danger:#ef4444;--text:#e8edf6;--muted:#94a3b8;--border:#2a3650}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);line-height:1.5;padding:20px}.wrap{max-width:1000px;margin:0 auto}
+h1{font-size:1.5rem;margin-bottom:4px}.muted{color:var(--muted);font-size:.9rem}
+.login{max-width:380px;margin:80px auto;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center}
+input,textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);font-size:.95rem;outline:none;margin-bottom:12px}
+input:focus,textarea:focus{border-color:var(--accent2)}
+.btn{border:none;border-radius:9px;padding:11px 18px;font-size:.95rem;font-weight:600;cursor:pointer;color:#fff;background:var(--accent2)}
+.btn.green{background:var(--accent);color:#06231a}.btn.red{background:var(--danger)}.btn.sm{padding:6px 12px;font-size:.82rem}
+.err{color:#f87171;font-size:.85rem;min-height:18px;margin-bottom:6px}.hidden{display:none}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+.banner{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:#fcd34d;padding:9px 14px;border-radius:9px;font-size:.83rem;margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:18px}
+.stat .n{font-size:1.7rem;font-weight:700}.stat .c{font-size:.8rem;color:var(--muted)}
+.stat.balance{background:linear-gradient(135deg,rgba(34,197,94,.18),rgba(34,197,94,.05));border-color:rgba(34,197,94,.4)}.stat.balance .n{color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}.card h2{font-size:1.1rem;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--border)}th{color:var(--muted);font-size:.78rem;text-transform:uppercase}
+.prow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.prow .pname{font-weight:600}.prow .pmeta{font-size:.78rem;color:var(--muted)}.actions{display:flex;gap:6px}
+.addgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px}
+</style></head><body><div class="wrap">
+<div class="login" id="loginBox"><h1>🔐 Admin Panel</h1><p class="muted" style="margin-bottom:18px">Parolu daxil et</p>
+<div class="err" id="loginErr"></div><input type="password" id="pw" placeholder="Parol"><button class="btn" style="width:100%" id="loginBtn">Daxil ol</button></div>
+<div id="dash" class="hidden">
+<div class="topbar"><div><h1>📊 Admin Panel</h1><p class="muted">Statistika ve idareetme</p></div>
+<div><a class="btn sm" href="/" target="_blank" style="text-decoration:none">Magaza</a> <button class="btn sm red" id="logoutBtn">Cixis</button></div></div>
+<div class="banner hidden" id="demoBanner">DEMO REJIM: test sifarisleri (real pul deyil).</div>
+<div class="stats">
+<div class="stat balance"><div class="n" id="st_balance">$0</div><div class="c">Umumi balans</div></div>
+<div class="stat"><div class="n" id="st_orders">0</div><div class="c">Sifaris</div></div>
+<div class="stat"><div class="n" id="st_items">0</div><div class="c">Satilan</div></div>
+<div class="stat"><div class="n" id="st_products">0</div><div class="c">Kataloq</div></div></div>
+<div class="card"><h2>Son sifarisler</h2><table><thead><tr><th>Tarix</th><th>Mehsullar</th><th>Mebleg</th></tr></thead><tbody id="ordersBody"><tr><td colspan="3" class="muted">Hele sifaris yoxdur.</td></tr></tbody></table></div>
+<div class="card"><h2>Mehsullari idare et</h2><div id="productList"></div></div>
+<div class="card"><h2>Yeni mehsul</h2><div class="err" id="addErr"></div>
+<div class="addgrid"><div><label>ID</label><input id="a_id"></div><div><label>Ad</label><input id="a_name"></div>
+<div><label>Emoji</label><input id="a_emoji" value="📦"></div><div><label>Qiymet (sent: 499=$4.99)</label><input id="a_price" type="number" value="499"></div>
+<div><label>Storage fayl yolu</label><input id="a_file" placeholder="menim-faylim.pdf"></div></div>
+<label style="margin-top:10px">Tesvir</label><textarea id="a_desc" rows="2"></textarea><button class="btn green" id="addBtn">Elave et</button></div>
+</div></div>
+<script>
+const $=s=>document.querySelector(s);const money=c=>'$'+(c/100).toFixed(2);let TOKEN=localStorage.getItem('adminToken')||'';
+function H(){return{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN};}
+async function login(){$('#loginErr').textContent='';const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('#pw').value})});const d=await r.json();if(!r.ok){$('#loginErr').textContent=d.error||'Xeta';return;}TOKEN=d.token;localStorage.setItem('adminToken',TOKEN);showDash();}
+function logout(){localStorage.removeItem('adminToken');TOKEN='';$('#dash').classList.add('hidden');$('#loginBox').classList.remove('hidden');}
+async function showDash(){$('#loginBox').classList.add('hidden');$('#dash').classList.remove('hidden');await Promise.all([loadStats(),loadProducts()]);}
+async function loadStats(){const r=await fetch('/api/admin/stats',{headers:H()});if(r.status===401){logout();return;}const d=await r.json();$('#st_balance').textContent=money(d.balance);$('#st_orders').textContent=d.orderCount;$('#st_items').textContent=d.itemsSold;$('#st_products').textContent=d.productCount;$('#demoBanner').classList.toggle('hidden',!d.demo);const ob=$('#ordersBody');if(!d.recent.length)ob.innerHTML='<tr><td colspan="3" class="muted">Hele sifaris yoxdur.</td></tr>';else ob.innerHTML=d.recent.map(o=>`<tr><td>${new Date(o.created_at).toLocaleString('az')}</td><td>${(o.items||[]).map(i=>(i.emoji||'')+' '+i.name).join(', ')}</td><td>${money(o.total)}</td></tr>`).join('');}
+async function loadProducts(){const r=await fetch('/api/admin/products',{headers:H()});if(r.status===401){logout();return;}const list=await r.json();$('#productList').innerHTML=list.map(p=>`<div class="prow" data-id="${p.id}"><div><div class="pname">${p.emoji||'📦'} ${p.name}</div><div class="pmeta">${p.id} · fayl: ${p.file_path||'—'}</div></div><div style="display:flex;align-items:center;gap:6px">$<input type="number" value="${(p.price/100).toFixed(2)}" step="0.01" style="width:80px;margin:0" data-price></div><div class="actions"><button class="btn sm green" data-save>Saxla</button><button class="btn sm red" data-del>Sil</button></div></div>`).join('');
+document.querySelectorAll('.prow').forEach(row=>{const id=row.dataset.id;row.querySelector('[data-save]').addEventListener('click',async()=>{const price=Math.round(parseFloat(row.querySelector('[data-price]').value)*100)||0;const r=await fetch('/api/admin/products',{method:'PUT',headers:H(),body:JSON.stringify({id,price})});if(r.ok){row.querySelector('[data-save]').textContent='OK';setTimeout(()=>row.querySelector('[data-save]').textContent='Saxla',1200);loadStats();}});row.querySelector('[data-del]').addEventListener('click',async()=>{if(!confirm('Silinsin?'))return;const r=await fetch('/api/admin/products',{method:'DELETE',headers:H(),body:JSON.stringify({id})});if(r.ok){loadProducts();loadStats();}});});}
+async function addProduct(){$('#addErr').textContent='';const body={id:$('#a_id').value,name:$('#a_name').value,emoji:$('#a_emoji').value,price:$('#a_price').value,file_path:$('#a_file').value,description:$('#a_desc').value};const r=await fetch('/api/admin/products',{method:'POST',headers:H(),body:JSON.stringify(body)});const d=await r.json();if(!r.ok){$('#addErr').textContent=d.error||'Xeta';return;}$('#a_id').value='';$('#a_name').value='';$('#a_file').value='';$('#a_desc').value='';loadProducts();loadStats();}
+$('#loginBtn').addEventListener('click',login);$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')login();});$('#logoutBtn').addEventListener('click',logout);$('#addBtn').addEventListener('click',addProduct);
+if(TOKEN)showDash();
+</script></body></html>
