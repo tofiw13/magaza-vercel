@@ -1,4 +1,5 @@
 // Telegram webhook: "Təsdiqlə/Rədd et" düymələrini emal edir
+// Təhlükəsizlik: yalnız ADMIN (TELEGRAM_CHAT_ID = sənin hesabın) təsdiq/rədd edə bilər
 const { supabase } = require('../lib/supabase');
 
 const TG = process.env.TELEGRAM_BOT_TOKEN;
@@ -14,18 +15,24 @@ async function tg(method, body) {
 }
 
 module.exports = async (req, res) => {
-  // Təhlükəsizlik: gizli token yoxlaması
-  if (SECRET && req.headers['x-telegram-bot-api-secret-token'] !== SECRET) {
+  // Yalnız secret həm təyin olunubsa, HƏM də header gəlibsə yoxla.
+  // (Webhook secretsiz qeydiyyatdan keçibsə, təhlükəsizlik admin chat ID ilə təmin olunur.)
+  const hdr = req.headers['x-telegram-bot-api-secret-token'];
+  if (SECRET && hdr && hdr !== SECRET) {
     return res.status(401).json({ error: 'unauthorized' });
   }
-  const update = req.body || {};
+
+  // Body parse (Vercel adətən avtomatik edir, amma string gələrsə fallback)
+  let update = req.body || {};
+  if (typeof update === 'string') { try { update = JSON.parse(update); } catch { update = {}; } }
+
   const cq = update.callback_query;
   if (!cq) return res.json({ ok: true }); // yalnız düymə basışlarını emal edirik
 
-  // Yalnız admin (sənin chat id) təsdiq edə bilər
+  // YALNIZ admin (sənin Telegram hesabın) təsdiq edə bilər
   const fromId = String(cq.from?.id || '');
-  if (ADMIN_CHAT && fromId !== ADMIN_CHAT) {
-    await tg('answerCallbackQuery', { callback_query_id: cq.id, text: 'İcazə yoxdur.' });
+  if (!ADMIN_CHAT || fromId !== ADMIN_CHAT) {
+    await tg('answerCallbackQuery', { callback_query_id: cq.id, text: '⛔ Yalnız admin təsdiq edə bilər.' });
     return res.json({ ok: true });
   }
 
