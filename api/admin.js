@@ -110,5 +110,24 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Metod dəstəklənmir.' });
   }
 
+  // --- SETBALANCE (istifadəçi balansını idarə et) ---
+  if (action === 'setbalance') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'POST lazımdır.' });
+    const email = (req.body?.email || '').trim();
+    const mode = req.body?.mode; // 'set' | 'add'
+    const amountManat = Number(req.body?.amount);
+    if (!email || !['set', 'add'].includes(mode) || isNaN(amountManat)) {
+      return res.status(400).json({ error: 'email, mode və amount lazımdır.' });
+    }
+    const delta = Math.round(amountManat * 100); // sentə çevir
+    const { data: prof, error: e1 } = await supabase.from('profiles').select('id,balance').eq('email', email).single();
+    if (e1 || !prof) return res.status(404).json({ error: 'Bu email ilə istifadəçi tapılmadı.' });
+    let newBalance = mode === 'set' ? delta : (prof.balance || 0) + delta;
+    if (newBalance < 0) newBalance = 0;
+    const { error: e2 } = await supabase.from('profiles').update({ balance: newBalance }).eq('id', prof.id);
+    if (e2) return res.status(500).json({ error: e2.message });
+    return res.json({ ok: true, email, newBalance });
+  }
+
   res.status(400).json({ error: 'Naməlum action.' });
 };
