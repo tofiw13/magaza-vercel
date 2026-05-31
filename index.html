@@ -130,8 +130,10 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
 <div class="overlay" id="authOverlay"><div class="modal">
   <span class="x" data-close>&times;</span>
   <div class="tabs"><button id="tabLogin" class="active">Daxil ol</button><button id="tabSignup">Qeydiyyat</button></div>
+  <div id="nameRow" style="display:none"><label>Ad Soyad</label><input id="authName" type="text" placeholder="Ad Soyad"></div>
   <label>Email</label><input id="authEmail" type="email" placeholder="ad@email.com">
   <label>Parol</label><input id="authPass" type="password" placeholder="••••••••">
+  <div id="pass2Row" style="display:none"><label>Parolu təsdiqlə</label><input id="authPass2" type="password" placeholder="••••••••"></div>
   <button class="btn green" style="width:100%;margin-top:14px" id="authSubmit">Davam et</button>
   <div class="divider">və ya</div>
   <button class="btn ghost" style="width:100%" id="googleBtn">🔵 Google ilə davam et</button>
@@ -256,20 +258,35 @@ async function refreshUser(){
 
 // AUTH
 let authMode='login';
-function openAuth(mode){authMode=mode;$('#tabLogin').classList.toggle('active',mode==='login');$('#tabSignup').classList.toggle('active',mode==='signup');$('#authMsg').textContent='';$('#authOverlay').classList.add('show');}
+function openAuth(mode){authMode=mode;$('#tabLogin').classList.toggle('active',mode==='login');$('#tabSignup').classList.toggle('active',mode==='signup');$('#authMsg').textContent='';
+  const sup=mode==='signup';
+  $('#nameRow').style.display=sup?'block':'none';
+  $('#pass2Row').style.display=sup?'block':'none';
+  $('#authSubmit').textContent=sup?'Qeydiyyatdan keç':'Daxil ol';
+  $('#authOverlay').classList.add('show');}
 $('#tabLogin').onclick=()=>openAuth('login');$('#tabSignup').onclick=()=>openAuth('signup');
 $('#authSubmit').onclick=async()=>{
   if(!sb){$('#authMsg').textContent='Auth konfiqurasiya olunmayıb (SUPABASE_ANON_KEY).';$('#authMsg').className='msg err';return;}
   const email=$('#authEmail').value.trim(),pass=$('#authPass').value;
-  $('#authMsg').textContent='Gözləyin...';$('#authMsg').className='msg';
+  if(!email||!pass){$('#authMsg').textContent='Email və parol lazımdır.';$('#authMsg').className='msg err';return;}
   let r;
-  if(authMode==='signup')r=await sb.auth.signUp({email,password:pass});
-  else r=await sb.auth.signInWithPassword({email,password:pass});
+  if(authMode==='signup'){
+    const name=$('#authName').value.trim();
+    const pass2=$('#authPass2').value;
+    if(!name){$('#authMsg').textContent='Ad Soyad lazımdır.';$('#authMsg').className='msg err';return;}
+    if(pass.length<6){$('#authMsg').textContent='Parol ən azı 6 simvol olmalıdır.';$('#authMsg').className='msg err';return;}
+    if(pass!==pass2){$('#authMsg').textContent='Parollar uyğun gəlmir.';$('#authMsg').className='msg err';return;}
+    $('#authMsg').textContent='Gözləyin...';$('#authMsg').className='msg';
+    r=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+  }else{
+    $('#authMsg').textContent='Gözləyin...';$('#authMsg').className='msg';
+    r=await sb.auth.signInWithPassword({email,password:pass});
+  }
   if(r.error){$('#authMsg').textContent=r.error.message;$('#authMsg').className='msg err';return;}
   if(authMode==='signup'&&!r.data.session){$('#authMsg').textContent='Email-ə təsdiq linki göndərildi. Təsdiqlə və daxil ol.';$('#authMsg').className='msg ok';return;}
   session=r.data.session;$('#authOverlay').classList.remove('show');refreshUser();
 };
-$('#googleBtn').onclick=async()=>{if(!sb)return;await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin}});};
+$('#googleBtn').onclick=async()=>{if(!sb){$('#authMsg').textContent='Google girişi üçün konfiqurasiya lazımdır.';$('#authMsg').className='msg err';return;}const r=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin}});if(r.error){$('#authMsg').textContent='Google girişi aktiv deyil: '+r.error.message;$('#authMsg').className='msg err';}};
 
 // TARİXÇƏ — balans artırma + alınan məhsullar
 async function openHistory(){
