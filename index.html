@@ -141,6 +141,14 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
   <div id="histList"><p style="color:var(--muted);font-size:.85rem">Yüklənir...</p></div>
 </div></div>
 
+<!-- MƏHSULLARIM MODAL -->
+<div class="overlay" id="myOverlay"><div class="modal">
+  <span class="x" data-close>&times;</span>
+  <h2>📦 Məhsullarım</h2>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:6px">Aldığın məhsullar burada. İstənilən vaxt yenidən yüklə.</p>
+  <div class="dl" id="myList"><p style="color:var(--muted);font-size:.85rem">Yüklənir...</p></div>
+</div></div>
+
 <!-- DOWNLOADS MODAL -->
 <div class="overlay" id="dlOverlay"><div class="modal">
   <span class="x" data-close>&times;</span>
@@ -198,9 +206,10 @@ async function refreshUser(){
     if(pollTimer){clearInterval(pollTimer);pollTimer=null;}return;}
   let bal=0;
   try{const {data}=await sb.from('profiles').select('balance').eq('id',session.user.id).single();bal=data?.balance||0;}catch(e){}
-  nav.innerHTML=`<span class="bal">💰 ${money(bal)}</span><span class="uemail">${session.user.email||''}</span><button class="btn ghost sm" id="histBtn">🧾 Tarixçə</button><button class="btn sm" id="addBalBtn">Balans artır</button><button class="btn ghost sm" id="logoutBtn">Çıxış</button>`;
+  nav.innerHTML=`<span class="bal">💰 ${money(bal)}</span><span class="uemail">${session.user.email||''}</span><button class="btn ghost sm" id="myBtn">📦 Məhsullarım</button><button class="btn ghost sm" id="histBtn">🧾 Tarixçə</button><button class="btn sm" id="addBalBtn">Balans artır</button><button class="btn ghost sm" id="logoutBtn">Çıxış</button>`;
   $('#addBalBtn').onclick=()=>$('#topupOverlay').classList.add('show');
   $('#histBtn').onclick=openHistory;
+  $('#myBtn').onclick=openMyProducts;
   $('#logoutBtn').onclick=async()=>{ if(confirm('Çıxmaq istədiyinizə əminsiniz?')){ await sb.auth.signOut();session=null;refreshUser(); } };
   startPolling();
 }
@@ -242,6 +251,23 @@ async function openHistory(){
       return `<div class="hist-row"><div><b style="color:${col}">${sign}${money(e.amount)}</b><div style="font-size:.8rem;color:#cbd5e1">💰 Balans artırma</div><div class="hist-date">${new Date(e.date).toLocaleString('az')}</div></div><span class="tag ${e.status}">${label[e.status]||e.status}</span></div>`;
     }).join('');
   }catch(e){$('#histList').innerHTML='<p style="color:#f87171;font-size:.85rem">Tarixçə yüklənmədi.</p>';}
+}
+
+// MƏHSULLARIM — alınan məhsullar + yenidən yükləmə
+async function openMyProducts(){
+  $('#myOverlay').classList.add('show');
+  $('#myList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Yüklənir...</p>';
+  try{
+    const r=await fetch('/api/buy?my=1',{headers:{'Authorization':'Bearer '+session.access_token}});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Xəta');
+    const owned=d.owned||[];
+    if(!owned.length){$('#myList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Hələ məhsul almamısan.</p>';return;}
+    $('#myList').innerHTML=owned.map(p=>p.url
+      ? `<a href="${p.url}" target="_blank">${p.emoji||'📦'} ${p.name}<span style="margin-left:auto;color:var(--accent)">↓ Yüklə</span></a>`
+      : `<div class="dl"><span style="display:flex;gap:10px;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:12px 14px">${p.emoji||'📦'} ${p.name} <span style="margin-left:auto;color:var(--muted)">fayl yoxdur</span></span></div>`
+    ).join('');
+  }catch(e){$('#myList').innerHTML='<p style="color:#f87171;font-size:.85rem">Yüklənmədi.</p>';}
 }
 
 // POLLING — topup statusu dəyişəndə toast göstər + balansı yenilə

@@ -10,6 +10,37 @@ module.exports = async (req, res) => {
   const user = await getUser(req);
   if (!user) return res.status(401).json({ error: 'Əvvəlcə daxil ol.' });
 
+  // ---------- MƏHSULLARIM (alınan məhsullar + yenidən yükləmə) ----------
+  if (req.method === 'GET' && req.query.my === '1') {
+    const { data: orders } = await supabase
+      .from('orders').select('items,created_at,order_key')
+      .like('order_key', `bal_${user.id}_%`).order('created_at', { ascending: false });
+    // Təkrarsız məhsul siyahısı (ən son alınma tarixi ilə)
+    const seen = {};
+    (orders || []).forEach((o) => {
+      (o.items || []).forEach((it) => {
+        if (!seen[it.id]) seen[it.id] = { id: it.id, name: it.name, emoji: it.emoji, date: o.created_at };
+      });
+    });
+    const ids = Object.keys(seen);
+    const owned = [];
+    if (ids.length) {
+      const { data: products } = await supabase.from('products').select('id,file_path').in('id', ids);
+      const fileMap = {};
+      (products || []).forEach((p) => { fileMap[p.id] = p.file_path; });
+      ids.forEach((id) => {
+        const fp = fileMap[id];
+        let url = null;
+        if (fp) {
+          const t = makeToken('file:' + fp, SIGNED_URL_TTL * 1000);
+          url = `/api/file?t=${encodeURIComponent(t)}`;
+        }
+        owned.push({ ...seen[id], url });
+      });
+    }
+    return res.json({ owned });
+  }
+
   // ---------- TARİXÇƏ ----------
   if (req.method === 'GET') {
     const events = [];
