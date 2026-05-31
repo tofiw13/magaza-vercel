@@ -129,5 +129,13 @@ module.exports = async (req, res) => {
     return res.json({ ok: true, email, newBalance });
   }
 
+  // --- RESETORDERS (son sifarişləri sıfırla) ---
+  if (action === 'resetorders') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'POST lazımdır.' });
+    const { error } = await supabase.from('orders').delete().neq('order_key', '___none___');
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true });
+  }
+
   res.status(400).json({ error: 'Naməlum action.' });
 };
