@@ -1,11 +1,20 @@
 -- ============================================================
---  GOOGLE / EMAIL GİRİŞDƏ "500 unexpected_failure" XƏTASININ HƏLLİ
---  Səbəb: yeni istifadəçi yaranəndə trigger profil yarada bilmir → auth çökür.
---  Bu skript trigger-i "bulletproof" edir (xəta olsa belə auth bloklanmır).
+--  GOOGLE GİRİŞDƏ "/auth/v1/callback 500" XƏTASININ TAM HƏLLİ
+--
+--  Səbəb: yeni istifadəçi yaranəndə auth.users üzərindəki trigger
+--  (handle_new_user) uğursuz olur və bütün auth callback çökür (500).
+--
+--  HƏLL: Trigger-i TAMAMİLƏ SİLİRİK. Profil/balans artıq backend
+--  tərəfindən (ensureProfile) avtomatik yaranır — trigger lazım deyil.
+--
 --  Supabase -> SQL Editor -> hamısını yapışdır -> RUN
 -- ============================================================
 
--- 1) profiles cədvəli mövcuddur (yoxdursa yarat)
+-- 1) Auth-u çökdürən trigger-i sil (ƏN VACİB ADDIM)
+drop trigger if exists on_auth_user_created on auth.users;
+drop function if exists public.handle_new_user();
+
+-- 2) profiles cədvəli düzgün qurulub (yoxdursa yarat)
 create table if not exists public.profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
   email       text,
@@ -13,42 +22,20 @@ create table if not exists public.profiles (
   full_name   text,
   created_at  timestamptz default now()
 );
-
--- full_name sütunu yoxdursa əlavə et (köhnə bazalar üçün)
 alter table public.profiles add column if not exists full_name text;
 
--- 2) Trigger funksiyasını təhlükəsiz (exception-safe) et
-create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  begin
-    insert into public.profiles (id, email, full_name)
-    values (new.id, new.email, coalesce(new.raw_user_meta_data->>'full_name', ''))
-    on conflict (id) do nothing;
-  exception when others then
-    -- Hər hansı xəta olsa belə auth prosesini BLOKLAMA
-    null;
-  end;
-  return new;
-end;
-$$;
+-- 3) RLS: istifadəçi yalnız öz profilini oxusun (server service_role bypass edir)
+alter table public.profiles enable row level security;
+drop policy if exists "own profile read" on public.profiles;
+create policy "own profile read" on public.profiles for select using (auth.uid() = id);
 
--- 3) Trigger-i yenidən qur
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
-
--- 4) Artıq mövcud olan (profili olmayan) istifadəçilər üçün profil yarat
+-- 4) Artıq mövcud istifadəçilər üçün profil tamamla
 insert into public.profiles (id, email, full_name)
-select u.id, u.email, coalesce(u.raw_user_meta_data->>'full_name','')
+select u.id, u.email, coalesce(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name', '')
 from auth.users u
 on conflict (id) do nothing;
 
 -- ============================================================
---  Bitdi. İndi Google/email girişi 500 verməyəcək.
+--  Bitdi! İndi Google/email girişi 500 VERMƏYƏCƏK.
+--  (Profil ilk balans/alış əməliyyatında backend tərəfindən yaranır.)
 -- ============================================================

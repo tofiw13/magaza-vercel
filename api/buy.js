@@ -1,7 +1,7 @@
 // GET  → istifadəçinin tarixçəsi (balans artırma + alınan məhsullar)
 // POST → balansla məhsul al
 const { supabase } = require('../lib/supabase');
-const { getUser } = require('../lib/user');
+const { getUser, ensureProfile } = require('../lib/user');
 const { makeToken } = require('../lib/auth');
 
 const SIGNED_URL_TTL = 3600;
@@ -9,6 +9,7 @@ const SIGNED_URL_TTL = 3600;
 module.exports = async (req, res) => {
   const user = await getUser(req);
   if (!user) return res.status(401).json({ error: 'Əvvəlcə daxil ol.' });
+  await ensureProfile(user);
 
   // ---------- MƏHSULLARIM (alınan məhsullar + yenidən yükləmə) ----------
   if (req.method === 'GET' && req.query.my === '1') {

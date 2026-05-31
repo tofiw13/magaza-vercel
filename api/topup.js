@@ -1,11 +1,12 @@
 // Balans artırma sorğusu: qəbz şəklini yüklə + Telegram-a göndər + pending yarat
 const { supabase } = require('../lib/supabase');
-const { getUser } = require('../lib/user');
+const { getUser, ensureProfile } = require('../lib/user');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST lazımdır.' });
   const user = await getUser(req);
   if (!user) return res.status(401).json({ error: 'Əvvəlcə daxil ol.' });
+  await ensureProfile(user);
 
   try {
     const amountManat = Number(req.body?.amount) || 0;
