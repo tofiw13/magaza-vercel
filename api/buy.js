@@ -1,4 +1,5 @@
-// Balansla məhsul al (Stripe yox): balansdan çıx, sifariş yarat, yükləmə linkləri qaytar
+// GET  → istifadəçinin tarixçəsi (balans artırma + alınan məhsullar)
+// POST → balansla məhsul al
 const { supabase } = require('../lib/supabase');
 const { getUser } = require('../lib/user');
 const { makeToken } = require('../lib/auth');
@@ -6,10 +7,34 @@ const { makeToken } = require('../lib/auth');
 const SIGNED_URL_TTL = 3600;
 
 module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST lazımdır.' });
   const user = await getUser(req);
-  if (!user) return res.status(401).json({ error: 'Almaq üçün əvvəlcə daxil ol.' });
+  if (!user) return res.status(401).json({ error: 'Əvvəlcə daxil ol.' });
 
+  // ---------- TARİXÇƏ ----------
+  if (req.method === 'GET') {
+    const events = [];
+    // 1) Balans artırma sorğuları
+    const { data: topups } = await supabase
+      .from('topups').select('amount,status,created_at')
+      .eq('user_id', user.id).order('created_at', { ascending: false });
+    (topups || []).forEach((t) => {
+      events.push({ type: 'topup', amount: t.amount, status: t.status, date: t.created_at });
+    });
+    // 2) Alışlar (order_key = "bal_<userid>_<time>")
+    const { data: orders } = await supabase
+      .from('orders').select('items,total,created_at,order_key')
+      .like('order_key', `bal_${user.id}_%`).order('created_at', { ascending: false });
+    (orders || []).forEach((o) => {
+      const names = (o.items || []).map((i) => (i.emoji || '') + ' ' + i.name).join(', ');
+      events.push({ type: 'purchase', amount: o.total, names, date: o.created_at });
+    });
+    // Tarixə görə sırala (yeni → köhnə)
+    events.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return res.json({ events });
+  }
+
+  // ---------- BALANSLA AL ----------
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Metod dəstəklənmir.' });
   try {
     const items = Array.isArray(req.body?.items) ? req.body.items : [];
     const ids = [...new Set(items.map((i) => i.id))];
@@ -21,15 +46,11 @@ module.exports = async (req, res) => {
 
     const { data: profile } = await supabase.from('profiles').select('balance').eq('id', user.id).single();
     const balance = profile?.balance || 0;
-    if (balance < total) {
-      return res.status(402).json({ error: 'Balans kifayət etmir.', need: total, balance });
-    }
+    if (balance < total) return res.status(402).json({ error: 'Balans kifayət etmir.', need: total, balance });
 
-    // balansdan çıx
     const upd = await supabase.from('profiles').update({ balance: balance - total }).eq('id', user.id);
     if (upd.error) return res.status(500).json({ error: upd.error.message });
 
-    // sifarişi qeyd et
     const orderKey = `bal_${user.id}_${Date.now()}`;
     const orderItems = products.map((p) => ({ id: p.id, name: p.name, price: p.price, emoji: p.emoji }));
     await supabase.from('orders').upsert(
@@ -37,7 +58,6 @@ module.exports = async (req, res) => {
       { onConflict: 'order_key', ignoreDuplicates: true }
     );
 
-    // yükləmə linkləri (proxy ilə düzgün açılır/redaktə olunur)
     const downloads = [];
     for (const p of products) {
       if (!p.file_path) continue;

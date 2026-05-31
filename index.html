@@ -137,7 +137,7 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
 <!-- TARİXÇƏ MODAL -->
 <div class="overlay" id="histOverlay"><div class="modal">
   <span class="x" data-close>&times;</span>
-  <h2>🧾 Ödəniş tarixçəsi</h2>
+  <h2>🧾 Əməliyyat tarixçəsi</h2>
   <div id="histList"><p style="color:var(--muted);font-size:.85rem">Yüklənir...</p></div>
 </div></div>
 
@@ -222,16 +222,25 @@ $('#authSubmit').onclick=async()=>{
 };
 $('#googleBtn').onclick=async()=>{if(!sb)return;await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin}});};
 
-// ÖDƏNİŞ TARİXÇƏSİ
+// TARİXÇƏ — balans artırma + alınan məhsullar
 async function openHistory(){
   $('#histOverlay').classList.add('show');
   $('#histList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Yüklənir...</p>';
   try{
-    const {data,error}=await sb.from('topups').select('*').order('created_at',{ascending:false});
-    if(error)throw error;
-    if(!data||!data.length){$('#histList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Hələ ödəniş yoxdur.</p>';return;}
+    const r=await fetch('/api/buy',{headers:{'Authorization':'Bearer '+session.access_token}});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Xəta');
+    const ev=d.events||[];
+    if(!ev.length){$('#histList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Hələ əməliyyat yoxdur.</p>';return;}
     const label={pending:'Gözləyir',approved:'Təsdiqləndi',rejected:'Rədd edildi'};
-    $('#histList').innerHTML=data.map(t=>`<div class="hist-row"><div><b>${money(t.amount)}</b><div class="hist-date">${new Date(t.created_at).toLocaleString('az')}</div></div><span class="tag ${t.status}">${label[t.status]||t.status}</span></div>`).join('');
+    $('#histList').innerHTML=ev.map(e=>{
+      if(e.type==='purchase'){
+        return `<div class="hist-row"><div><b style="color:#f87171">− ${money(e.amount)}</b><div style="font-size:.8rem;color:#cbd5e1">🛒 ${e.names||'Alış'}</div><div class="hist-date">${new Date(e.date).toLocaleString('az')}</div></div><span class="tag approved">Alındı</span></div>`;
+      }
+      const sign=e.status==='approved'?'+ ':'';
+      const col=e.status==='approved'?'#22c55e':'#94a3b8';
+      return `<div class="hist-row"><div><b style="color:${col}">${sign}${money(e.amount)}</b><div style="font-size:.8rem;color:#cbd5e1">💰 Balans artırma</div><div class="hist-date">${new Date(e.date).toLocaleString('az')}</div></div><span class="tag ${e.status}">${label[e.status]||e.status}</span></div>`;
+    }).join('');
   }catch(e){$('#histList').innerHTML='<p style="color:#f87171;font-size:.85rem">Tarixçə yüklənmədi.</p>';}
 }
 
