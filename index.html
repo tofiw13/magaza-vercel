@@ -209,7 +209,14 @@ async function init(){
   if(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase){
     sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);
     const {data}=await sb.auth.getSession();session=data.session;
-    sb.auth.onAuthStateChange((_e,s)=>{session=s;refreshUser();});
+    sb.auth.onAuthStateChange((event,s)=>{
+      const wasLoggedOut=!session;
+      session=s;refreshUser();
+      if(event==='SIGNED_IN' && s){
+        $('#authOverlay').classList.remove('show');
+        if(wasLoggedOut){const nm=(s.user.user_metadata&&s.user.user_metadata.full_name)||s.user.email||'';toast('Xoş gəldin'+(nm?', '+nm:'')+'! 🎉','green');}
+      }
+    });
   }
   await loadProducts();
   await refreshUser();
