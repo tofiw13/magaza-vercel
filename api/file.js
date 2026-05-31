@@ -54,7 +54,13 @@ module.exports = async (req, res) => {
 
   try {
     const { data, error } = await supabase.storage.from('downloads').download(path);
-    if (error || !data) return res.status(404).send('Fayl tapılmadı.');
+    if (error || !data) {
+      return res.status(404).send(
+        'Fayl tapılmadı: "' + path + '"\n\n' +
+        'Supabase -> Storage -> "downloads" bucket-də məhz bu adla fayl olmalıdır.\n' +
+        'Yoxla: fayl adı tam uyğundurmu? (böyük/kiçik hərf, .html uzantısı)'
+      );
+    }
     let buf = Buffer.from(await data.arrayBuffer());
 
     if (ext === 'md') {
