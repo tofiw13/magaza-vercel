@@ -1,9 +1,31 @@
-Sexsi Ayliq Budce,Planlasdirilan,Faktiki,Ferq
-CEMI GELIR,=SUM(B5:B8),=SUM(C5:C8),=C2-B2
-Teqaud/Maas,0,0,=C3-B3
-Valideyn destei,0,0,=C4-B4
-Frilans,0,0,=C5-B5
-Kiraye,0,0,=B6-C6
-Erzaq,0,0,=B7-C7
-Neqliyyat,0,0,=B8-C8
-QALIQ,=B2-SUM(B6:B8),=C2-SUM(C6:C8),
+ŞƏXSİ AYLIQ BÜDCƏ ŞABLONU,,,,
+Ay / İl:,,,Valyuta:,AZN (₼)
+,,,,
+=== GƏLİRLƏR ===,Planlaşdırılan,Faktiki,Fərq,Qeyd
+Təqaüd / Maaş,0,0,=C5-B5,
+Valideyn dəstəyi,0,0,=C6-B6,
+Frilans / Əlavə iş,0,0,=C7-B7,
+Burs / Mükafat,0,0,=C8-B8,
+Digər gəlir,0,0,=C9-B9,
+CƏMİ GƏLİR,=SUM(B5:B9),=SUM(C5:C9),=C10-B10,
+,,,,
+=== XƏRCLƏR ===,Planlaşdırılan,Faktiki,Fərq,Qeyd
+Kirayə / Yataqxana,0,0,=B14-C14,
+Kommunal (işıq/su/qaz),0,0,=B15-C15,
+Ərzaq / Market,0,0,=B16-C16,
+Nəqliyyat,0,0,=B17-C17,
+İnternet / Telefon,0,0,=B18-C18,
+Təhsil / Dərslik,0,0,=B19-C19,
+Səhiyyə / Dərman,0,0,=B20-C20,
+Geyim,0,0,=B21-C21,
+Əyləncə / Hobbi,0,0,=B22-C22,
+Abunəliklər (Netflix və s.),0,0,=B23-C23,
+Yığım / İnvestisiya,0,0,=B24-C24,
+Digər xərc,0,0,=B25-C25,
+CƏMİ XƏRC,=SUM(B14:B25),=SUM(C14:C25),=B26-C26,
+,,,,
+=== NƏTİCƏ ===,Planlaşdırılan,Faktiki,,
+QALIQ (Gəlir - Xərc),=B10-B26,=C10-C26,,
+Yığım faizi (%),=IF(B10=0;0;ROUND(B24/B10*100;1)),=IF(C10=0;0;ROUND(C24/C10*100;1)),,
+,,,,
+TÖVSİYƏ: Gəlirin azı 10-20%-ni yığıma ayır. Faktiki sütununu hər həftə yenilə.,,,,

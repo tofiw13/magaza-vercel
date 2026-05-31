@@ -1,1 +1,82 @@
-<!DOCTYPE html><html lang="az"><head><meta charset="UTF-8"><title>Instagram Sablonlari</title><style>body{font-family:'Segoe UI';background:#0f172a;color:#e2e8f0;padding:24px}.hint{max-width:1100px;margin:0 auto 18px;background:#1e293b;border:1px solid #334155;padding:14px;border-radius:10px}.grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}.post{aspect-ratio:1/1;border-radius:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:26px;position:relative}.post .num{position:absolute;top:10px;left:12px;font-size:11px;opacity:.6}.post h2{font-size:24px;font-weight:800;margin-bottom:10px}.post .badge{margin-top:14px;font-size:12px;border:1.5px solid currentColor;padding:6px 14px;border-radius:30px;font-weight:600}</style></head><body><div class="hint">30 hazir post sablonu. Screenshot al ve ya Canva-da tekrar yarat.</div><div class="grid" id="g"></div><script>const pal=[['#6366f1','#a855f7','#fff'],['#f43f5e','#fb7185','#fff'],['#22c55e','#16a34a','#fff'],['#0ea5e9','#2563eb','#fff'],['#f59e0b','#ef4444','#fff'],['#111827','#374151','#f9fafb'],['#ec4899','#8b5cf6','#fff'],['#14b8a6','#0d9488','#fff']];const id=[['YENI TEKLIF','Bu hefte 30% endirim','INDI AL'],['MOTIVASIYA','Bir addim at','DAVAM ET'],['SITAT','Ugur hazirliqdir','PAYLAS'],['MESLEHET','Vaxtini bol','OYREN'],['SUAL?','Hansini secersen?','SERH'],['5 ADDIM','Sifirdan basla','SIYAHI'],['TESEKKUR','1000 izleyici!','MINNETDAR'],['CANLI','Bu axsam 20:00','QOSUL']];const g=document.getElementById('g');for(let i=0;i<30;i++){const p=pal[i%pal.length],x=id[i%id.length];const d=document.createElement('div');d.className='post';d.style.background='linear-gradient(135deg,'+p[0]+','+p[1]+')';d.style.color=p[2];d.innerHTML='<div class="num">#'+String(i+1).padStart(2,'0')+'</div><h2>'+x[0]+'</h2><p>'+x[1]+'</p><div class="badge">'+x[2]+'</div>';g.appendChild(d);}</script></body></html>
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30 Instagram Post Önərisi</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+  body{background:#0f172a;color:#e2e8f0;padding:22px}
+  .head{max-width:1180px;margin:0 auto 18px;text-align:center}
+  .head h1{font-size:1.7rem;margin-bottom:6px}
+  .head p{color:#94a3b8;font-size:.92rem;max-width:640px;margin:0 auto}
+  .grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+  .card{background:#1e293b;border:1px solid #334155;border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .visual{aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:24px;position:relative}
+  .visual .num{position:absolute;top:10px;left:12px;font-size:11px;opacity:.7;font-weight:700}
+  .visual .cat{position:absolute;top:10px;right:12px;font-size:10px;opacity:.85;background:rgba(0,0,0,.25);padding:3px 8px;border-radius:20px}
+  .visual h2{font-size:22px;font-weight:800;line-height:1.2;margin-bottom:8px}
+  .visual p{font-size:13px;opacity:.92;line-height:1.4}
+  .body{padding:14px 16px}
+  .body .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:4px;margin-top:8px}
+  .body .cap{font-size:12.5px;color:#cbd5e1;line-height:1.5}
+  .body .tags{font-size:11.5px;color:#60a5fa;margin-top:6px;word-break:break-word}
+  @media print{body{background:#fff;color:#000}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>📸 30 Instagram Post Önərisi</h1>
+  <p>Hər kart üçün hazır dizayn ideyası + başlıq mətni (caption) + heşteq dəsti. Vizualı Canva/Figma-da təkrarla, başlığı kopyala və paylaş.</p>
+</div>
+<div class="grid" id="grid"></div>
+
+<script>
+const palettes=[['#6366f1','#a855f7','#fff'],['#f43f5e','#fb7185','#fff'],['#22c55e','#16a34a','#fff'],['#0ea5e9','#2563eb','#fff'],['#f59e0b','#ef4444','#fff'],['#111827','#374151','#f9fafb'],['#ec4899','#8b5cf6','#fff'],['#14b8a6','#0d9488','#fff'],['#eab308','#f59e0b','#1f2937'],['#8b5cf6','#6366f1','#fff']];
+const posts=[
+ {c:'Tanıtım',t:'XOŞ GƏLDİN!',s:'Hesabımızla tanış ol',cap:'Salam! 👋 Bu hesabda sənə [mövzu] haqqında faydalı məsləhətlər paylaşacağam. İzlə, qaçırma!',tags:'#bakı #azerbaijan #tövsiyə'},
+ {c:'Motivasiya',t:'BU GÜN BAŞLA',s:'Sabah deyil, indi',cap:'Mükəmməl an yoxdur. Ən yaxşı vaxt — indidir. Kiçik addım at, davam et. 💪',tags:'#motivasiya #ugur #inkişaf'},
+ {c:'Məsləhət',t:'5 SƏHV',s:'Yeni başlayanların etdiyi',cap:'Bu 5 səhvi etmə 👇 1) ... 2) ... 3) ... 4) ... 5) ... Hansını edirdin? Şərhdə yaz!',tags:'#məsləhət #öyrən'},
+ {c:'Sitat',t:'"..."',s:'Günün sözü',cap:'"Uğur — kiçik səylərin hər gün təkrarıdır." Razısan? ❤️ qoy.',tags:'#sitat #ilham'},
+ {c:'Sual',t:'SƏN HANSI?',s:'A yoxsa B?',cap:'İki variant var 👇 A və ya B? Seçimini şərhdə yaz, maraqlıdır! 🤔',tags:'#sual #anket'},
+ {c:'Endirim',t:'-30%',s:'Yalnız bu həftə',cap:'🔥 Bu həftə [məhsul] üçün 30% endirim! Fürsəti qaçırma — link bioda.',tags:'#endirim #kampaniya'},
+ {c:'Təlimat',t:'3 ADDIM',s:'Necə etməli',cap:'[Nəticə] əldə etmək üçün 3 sadə addım 👇 Yadda saxla (🔖) ki, unutmayasan!',tags:'#təlimat #howto'},
+ {c:'Öncə/Sonra',t:'ÖNCƏ → SONRA',s:'Nəticə özü danışır',cap:'Bax, fərqə! ✨ Sən də belə nəticə istəyirsən? Yaz görüm.',tags:'#nəticə #transformasiya'},
+ {c:'Siyahı',t:'TOP 5',s:'Mütləq bil',cap:'Bu 5 şeyi bilməsən çox şey itirirsən 👇 Hansını bilirdin?',tags:'#siyahı #faydalı'},
+ {c:'Minnətdarlıq',t:'1000 ❤️',s:'Təşəkkürlər!',cap:'1000 izləyiciyə çatdıq! 🎉 Hər birinizə təşəkkür. Növbəti hədəf: 5000!',tags:'#təşəkkür #milestone'},
+ {c:'Canlı',t:'CANLI YAYIM',s:'Bu axşam 20:00',cap:'Bu axşam saat 20:00-da canlı yayımdayam! 🔴 Sualların varsa indidən yaz.',tags:'#canlı #live'},
+ {c:'Fakt',t:'BİLİRDİNMİ?',s:'Maraqlı fakt',cap:'Bunu bilirdinmi? 🤯 [maraqlı fakt]. Dostuna göndər, o da bilsin!',tags:'#fakt #maraqlı'},
+ {c:'Məhsul',t:'YENİ!',s:'Təzə gəldi',cap:'Yeni [məhsul] artıq satışda! 🛍️ Detallar üçün link bioda.',tags:'#yeni #məhsul'},
+ {c:'Rəy',t:'MÜŞTƏRİ RƏYİ',s:'Onlar deyir...',cap:'"[müştəri rəyi]" — Belə rəylər bizi sevindirir 🙏 Sən də rəyini yaz!',tags:'#rəy #etibar'},
+ {c:'Məsləhət',t:'GÜNDƏLİK',s:'Vərdiş yarat',cap:'Hər gün 1 kiçik vərdiş = böyük dəyişiklik. Sənin vərdişin nədir? 👇',tags:'#vərdiş #inkişaf'},
+ {c:'Yadda saxla',t:'SAXLA 🔖',s:'Sonra lazım olacaq',cap:'Bu postu mütləq yadda saxla — sonra axtaranda tapa biləsən! 📌',tags:'#saxla #faydalı'},
+ {c:'Karusel',t:'SWIPE →',s:'Sürüşdür',cap:'Sağa sürüşdür və hamısını öyrən 👉 Sonuncu slayd ən vacibdir!',tags:'#karusel #öyrən'},
+ {c:'Mif',t:'MİF vs HƏQİQƏT',s:'Doğrumu?',cap:'Çoxları belə düşünür, amma həqiqət fərqlidir 👇 Sən hansına inanırdın?',tags:'#mif #həqiqət'},
+ {c:'Çağırış',t:'ETIKETLƏ',s:'Dostunu çağır',cap:'Bu postu görməli olan dostunu etiketlə 👇 Onun da xəbəri olsun!',tags:'#etiketlə #paylaş'},
+ {c:'Hekayə',t:'MƏNİM YOLUM',s:'Necə başladım',cap:'Sıfırdan başladım və bu gün buradayam. Hekayəni paylaşım? ❤️ qoy.',tags:'#hekayə #journey'},
+ {c:'Sürətli',t:'30 SANİYƏ',s:'Tez məsləhət',cap:'30 saniyəlik məsləhət ⏱️ Bunu et və fərqi gör. Sınadın? Yaz!',tags:'#sürətli #tip'},
+ {c:'Statistika',t:'%80',s:'İnanılmaz rəqəm',cap:'İnsanların 80%-i bunu bilmir 😮 İndi sən bilirsən. Paylaş!',tags:'#statistika #fakt'},
+ {c:'Səhv',t:'BUNU ETMƏ ❌',s:'Çox yayılmış səhv',cap:'Bu səhvi edirsənsə dayan! ✋ Bunun yerinə bunu et 👇',tags:'#səhv #məsləhət'},
+ {c:'Plan',t:'HƏFTƏLİK PLAN',s:'Belə planla',cap:'Həftəni belə planla və daha məhsuldar ol 📅 Şablonu yadda saxla!',tags:'#plan #məhsuldarlıq'},
+ {c:'İlham',t:'XƏYAL ET',s:'Böyük düşün',cap:'Böyük xəyallar böyük addımlardan başlayır. Sənin xəyalın nədir? 💭',tags:'#xəyal #ilham'},
+ {c:'Sual-Cavab',t:'SUALINI YAZ',s:'Q&A vaxtı',cap:'Sual-cavab vaxtı! 🙋 [mövzu] haqqında nə bilmək istəyirsən? Şərhdə soruş.',tags:'#qa #sual'},
+ {c:'Müqayisə',t:'A vs B',s:'Hansı daha yaxşı?',cap:'A və B-ni müqayisə etdik 👇 Sənin seçimin hansıdır?',tags:'#müqayisə'},
+ {c:'Bonus',t:'PULSUZ HƏDİYYƏ',s:'Sənə özəl',cap:'🎁 Pulsuz [hədiyyə] hazırladım! Almaq üçün link bioda və ya DM yaz.',tags:'#pulsuz #hədiyyə'},
+ {c:'Arxa plan',t:'PƏRDƏ ARXASI',s:'Necə hazırlanır',cap:'Pərdə arxasını göstərim 🎬 Belə hazırlanır. Maraqlıdır? ❤️',tags:'#behindthescenes'},
+ {c:'Xatırlatma',t:'UNUTMA!',s:'Vacib xatırlatma',cap:'Kiçik xatırlatma 💙 Özünə yaxşı bax və bu gün bir nailiyyət qeyd et.',tags:'#xatırlatma #özünəqayğı'},
+ {c:'Final',t:'TƏŞƏKKÜR ❤️',s:'Sonadək oxudun',cap:'Sonadək oxuduğun üçün təşəkkür! 🙏 İzlə, daha çox faydalı məzmun gəlir.',tags:'#təşəkkür #izlə'}
+];
+const grid=document.getElementById('grid');
+posts.forEach((p,i)=>{
+  const pal=palettes[i%palettes.length];
+  const el=document.createElement('div');el.className='card';
+  el.innerHTML=`<div class="visual" style="background:linear-gradient(135deg,${pal[0]},${pal[1]});color:${pal[2]}">
+    <div class="num">#${String(i+1).padStart(2,'0')}</div><div class="cat">${p.c}</div>
+    <h2>${p.t}</h2><p>${p.s}</p></div>
+    <div class="body"><div class="lbl">📝 Başlıq (caption)</div><div class="cap">${p.cap}</div>
+    <div class="lbl">🏷️ Heşteqlər</div><div class="tags">${p.tags}</div></div>`;
+  grid.appendChild(el);
+});
+</script>
+</body>
+</html>

@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
       const nb = (prof?.balance || 0) + topup.amount;
       await supabase.from('profiles').update({ balance: nb }).eq('id', topup.user_id);
       await supabase.from('topups').update({ status: 'approved' }).eq('id', id);
-      result = `✅ Təsdiqləndi (+$${(topup.amount / 100).toFixed(2)})`;
+      result = `✅ Təsdiqləndi (+${(topup.amount / 100).toFixed(2)} ₼)`;
     }
   }
 

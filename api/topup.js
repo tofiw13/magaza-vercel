@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
     if (TG && CHAT) {
       try {
         const signed = await supabase.storage.from('receipts').createSignedUrl(path, 3600);
-        const caption = `💰 Yeni balans sorğusu\n👤 ${user.email}\n💵 ${amountManat} (məbləğ)\n🆔 topup #${ins.data.id}\nTəsdiq üçün admin panelə bax.`;
+        const caption = `💰 Yeni balans sorğusu\n👤 ${user.email}\n💵 ${amountManat} ₼\n🆔 topup #${ins.data.id}\nTəsdiq və ya rədd üçün aşağıdakı düymələrə bas.`;
         const kb = { inline_keyboard: [[
           { text: '✅ Təsdiqlə', callback_data: `approve:${ins.data.id}` },
           { text: '❌ Rədd et', callback_data: `reject:${ins.data.id}` },

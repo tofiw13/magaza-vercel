@@ -57,6 +57,33 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.green{background:var(--accent);color:#06231a}
 .toast.red{background:var(--danger);color:#fff}
+/* === MOBİL GÖRÜNÜŞ === */
+@media(max-width:600px){
+  body{padding-bottom:130px}
+  .topnav{padding:10px 14px;gap:8px}
+  .topnav .brand{font-size:.98rem;width:100%;text-align:center}
+  .topnav .right{width:100%;justify-content:center;gap:8px}
+  .uemail{display:none}
+  .bal{font-size:.85rem;padding:5px 10px}
+  .btn.sm{padding:7px 10px;font-size:.8rem}
+  header{padding:28px 16px 20px}
+  header h1{font-size:1.45rem}
+  header p{font-size:.92rem}
+  .wrap{padding:0 14px}
+  .grid{grid-template-columns:1fr;gap:14px;margin-top:20px}
+  .prod{padding:18px}
+  .prod .ico{width:50px;height:50px;font-size:1.5rem}
+  .modal{padding:22px 18px;border-radius:14px}
+  .cartbar{padding:12px 14px;gap:10px}
+  .cartbar .total{font-size:1.1rem}
+  .checkout{flex:1;padding:13px 16px;font-size:.95rem}
+  .toast{bottom:100px;font-size:.9rem;padding:12px 18px;width:88%}
+  footer .ig{display:flex;justify-content:center;margin:8px 0 0}
+}
+@media(max-width:380px){
+  .topnav .right{flex-wrap:wrap}
+  header h1{font-size:1.3rem}
+}
 </style></head><body>
 
 <div class="topnav">
@@ -80,7 +107,7 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
   </footer>
 </div>
 
-<div class="cartbar"><div><span id="cartCount">0</span> məhsul səbətdə</div><div class="total" id="cartTotal">$0.00</div>
+<div class="cartbar"><div><span id="cartCount">0</span> məhsul səbətdə</div><div class="total" id="cartTotal">0.00 ₼</div>
 <button class="checkout" id="checkoutBtn" disabled>Al (balansla)</button></div>
 
 <!-- AUTH MODAL -->
@@ -101,7 +128,7 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
   <h2>💰 Balans artır</h2>
   <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">1) Aşağıdakı hesaba köçürmə et 2) Məbləği yaz 3) Qəbz şəklini yüklə → təsdiqdən sonra balansın artacaq.</p>
   <div class="pay-info" id="payInfo">...</div>
-  <label>Məbləğ ($)</label><input id="topAmount" type="number" step="0.01" placeholder="məs: 10">
+  <label>Məbləğ (₼)</label><input id="topAmount" type="number" step="0.01" placeholder="məs: 10">
   <label>Qəbz şəkli (ödəniş skrinşotu)</label><input id="topFile" type="file" accept="image/*">
   <button class="btn green" style="width:100%;margin-top:14px" id="topSubmit">Sorğu göndər</button>
   <div class="msg" id="topMsg"></div>
@@ -127,7 +154,7 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const $=s=>document.querySelector(s);const money=c=>'$'+(c/100).toFixed(2);
+const $=s=>document.querySelector(s);const money=c=>(c/100).toFixed(2)+' ₼';
 let PRODUCTS=[],cart={},sb=null,session=null,CFG={};
 let topupStatuses={};   // id -> status (dəyişikliyi izləmək üçün)
 let pollTimer=null;
