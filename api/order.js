@@ -1,5 +1,5 @@
 const { supabase } = require('../lib/supabase');
-const { verifyToken } = require('../lib/auth');
+const { verifyToken, makeToken } = require('../lib/auth');
 const crypto = require('crypto');
 const stripeKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeKey ? require('stripe')(stripeKey) : null;
@@ -22,6 +22,6 @@ module.exports = async (req, res) => {
   const total = items.reduce((s,p)=>s+p.price,0);
   await supabase.from('orders').upsert({ order_key: orderKey, items, total }, { onConflict:'order_key', ignoreDuplicates:true });
   const downloads = [];
-  for (const id of ids) { const p=(products||[]).find((x)=>x.id===id); if(!p||!p.file_path) continue; const { data, error } = await supabase.storage.from('downloads').createSignedUrl(p.file_path, TTL); if(!error && data) downloads.push({ name:p.name, emoji:p.emoji, url:data.signedUrl }); }
+  for (const id of ids) { const p=(products||[]).find((x)=>x.id===id); if(!p||!p.file_path) continue; const t=makeToken('file:'+p.file_path, TTL*1000); downloads.push({ name:p.name, emoji:p.emoji, url:`/api/file?t=${encodeURIComponent(t)}` }); }
   res.json({ downloads });
 };

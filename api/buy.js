@@ -1,6 +1,7 @@
 // Balansla məhsul al (Stripe yox): balansdan çıx, sifariş yarat, yükləmə linkləri qaytar
 const { supabase } = require('../lib/supabase');
 const { getUser } = require('../lib/user');
+const { makeToken } = require('../lib/auth');
 
 const SIGNED_URL_TTL = 3600;
 
@@ -36,12 +37,12 @@ module.exports = async (req, res) => {
       { onConflict: 'order_key', ignoreDuplicates: true }
     );
 
-    // yükləmə linkləri
+    // yükləmə linkləri (proxy ilə düzgün açılır/redaktə olunur)
     const downloads = [];
     for (const p of products) {
       if (!p.file_path) continue;
-      const s = await supabase.storage.from('downloads').createSignedUrl(p.file_path, SIGNED_URL_TTL);
-      if (s?.data) downloads.push({ name: p.name, emoji: p.emoji, url: s.data.signedUrl });
+      const t = makeToken('file:' + p.file_path, SIGNED_URL_TTL * 1000);
+      downloads.push({ name: p.name, emoji: p.emoji, url: `/api/file?t=${encodeURIComponent(t)}` });
     }
 
     res.json({ ok: true, newBalance: balance - total, downloads });
