@@ -37,16 +37,20 @@ module.exports = async (req, res) => {
       try {
         const signed = await supabase.storage.from('receipts').createSignedUrl(path, 3600);
         const caption = `💰 Yeni balans sorğusu\n👤 ${user.email}\n💵 ${amountManat} (məbləğ)\n🆔 topup #${ins.data.id}\nTəsdiq üçün admin panelə bax.`;
+        const kb = { inline_keyboard: [[
+          { text: '✅ Təsdiqlə', callback_data: `approve:${ins.data.id}` },
+          { text: '❌ Rədd et', callback_data: `reject:${ins.data.id}` },
+        ]] };
         const photoUrl = signed?.data?.signedUrl;
         if (photoUrl) {
           await fetch(`https://api.telegram.org/bot${TG}/sendPhoto`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: CHAT, photo: photoUrl, caption }),
+            body: JSON.stringify({ chat_id: CHAT, photo: photoUrl, caption, reply_markup: kb }),
           });
         } else {
           await fetch(`https://api.telegram.org/bot${TG}/sendMessage`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: CHAT, text: caption }),
+            body: JSON.stringify({ chat_id: CHAT, text: caption, reply_markup: kb }),
           });
         }
       } catch (e) { console.error('telegram error:', e.message); }
