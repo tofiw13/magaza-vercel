@@ -51,6 +51,22 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{text-align:left
 <div class="card"><h2>💰 Balans sorğuları (təsdiq)</h2><div id="topupsList" class="muted">Yüklənir...</div></div>
 <div class="card"><h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px">Son sifarisler <button class="btn sm red" id="resetOrdersBtn" style="font-weight:600">🗑️ Sıfırla</button></h2><table><thead><tr><th>Tarix</th><th>Mehsullar</th><th>Mebleg</th></tr></thead><tbody id="ordersBody"><tr><td colspan="3" class="muted">Hele sifaris yoxdur.</td></tr></tbody></table></div>
 <div class="card"><h2>Mehsullari idare et</h2><div id="productList"></div></div>
+
+<div class="card"><h2>🎟️ Endirim kuponları</h2>
+<div class="addgrid" style="grid-template-columns:1fr 1fr 1fr 1fr;align-items:end;margin-bottom:14px">
+<div><label>Kod</label><input id="pcCode" placeholder="məs: SALAM10" style="margin:0;text-transform:uppercase"></div>
+<div><label>Endirim %</label><input id="pcPercent" type="number" min="0" max="100" placeholder="10" style="margin:0"></div>
+<div><label>Maks. istifadə (boş=limitsiz)</label><input id="pcMax" type="number" min="1" placeholder="100" style="margin:0"></div>
+<div><label>Bitmə tarixi (boş=müddətsiz)</label><input id="pcExp" type="date" style="margin:0"></div>
+</div>
+<button class="btn green sm" id="pcAdd">+ Kupon əlavə et / yenilə</button>
+<div id="promoList" style="margin-top:14px"><span class="muted">Yüklənir...</span></div>
+</div>
+
+<div class="card"><h2>⏰ Müddətli endirimlər (məhsullara)</h2>
+<p class="muted" style="margin-bottom:12px">Hər məhsul üçün endirimli qiymət və bitmə tarixi təyin et. Bitmə tarixi boş olarsa, müddətsiz olur.</p>
+<div id="saleList"></div>
+</div>
 </div></div>
 <script>
 const $=s=>document.querySelector(s);const money=c=>(c/100).toFixed(2)+' ₼';let TOKEN=localStorage.getItem('adminToken')||'';
@@ -61,14 +77,69 @@ function uiConfirm(msg,title){return new Promise(res=>{$('#cfTitle').textContent
 function uiPrompt(msg,title){return new Promise(res=>{$('#pmTitle').textContent=title||'Dəyər daxil et';$('#pmMsg').textContent=msg;const inp=$('#pmInput');inp.value='';$('#promptOverlay').classList.add('show');setTimeout(()=>inp.focus(),100);const yes=$('#pmYes'),no=$('#pmNo');const done=v=>{$('#promptOverlay').classList.remove('show');yes.onclick=null;no.onclick=null;inp.onkeydown=null;res(v);};yes.onclick=()=>done(inp.value);no.onclick=()=>done(null);inp.onkeydown=e=>{if(e.key==='Enter')done(inp.value);};});}
 async function login(){$('#loginErr').textContent='';const r=await fetch('/api/admin?action=login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('#pw').value})});const d=await r.json();if(!r.ok){$('#loginErr').textContent=d.error||'Xeta';return;}TOKEN=d.token;localStorage.setItem('adminToken',TOKEN);showDash();}
 function logout(){localStorage.removeItem('adminToken');TOKEN='';$('#dash').classList.add('hidden');$('#loginBox').classList.remove('hidden');}
-async function showDash(){$('#loginBox').classList.add('hidden');$('#dash').classList.remove('hidden');await Promise.all([loadStats(),loadProducts(),loadTopups()]);}
+async function showDash(){$('#loginBox').classList.add('hidden');$('#dash').classList.remove('hidden');await Promise.all([loadStats(),loadProducts(),loadTopups(),loadPromos()]);}
 async function loadTopups(){const r=await fetch('/api/admin?action=topups',{headers:H()});if(r.status===401){logout();return;}const list=await r.json();const box=$('#topupsList');if(!list.length){box.innerHTML='<span class="muted">Sorğu yoxdur.</span>';return;}
 box.innerHTML=list.map(t=>`<div class="prow" data-tid="${t.id}"><div><div class="pname">${money(t.amount)} · ${t.user_email||''}</div><div class="pmeta">${new Date(t.created_at).toLocaleString('az')} · status: <b>${t.status}</b></div>${t.receiptUrl?`<a href="${t.receiptUrl}" target="_blank" style="color:#60a5fa;font-size:.8rem">📄 Qəbzə bax</a>`:''}</div><div class="actions">${t.status==='pending'?'<button class="btn sm green" data-ap>Təsdiqlə</button><button class="btn sm red" data-rj>Rədd</button>':'<span class="muted" style="font-size:.8rem">'+t.status+'</span>'}</div></div>`).join('');
 document.querySelectorAll('[data-tid]').forEach(row=>{const id=Number(row.dataset.tid);const ap=row.querySelector('[data-ap]');const rj=row.querySelector('[data-rj]');if(ap)ap.onclick=async()=>{ap.textContent='...';const r=await fetch('/api/admin?action=topups',{method:'POST',headers:H(),body:JSON.stringify({id,action:'approve'})});if(r.ok){loadTopups();loadStats();toast('Balans təsdiqləndi.','green');}};if(rj)rj.onclick=async()=>{if(!await uiConfirm('Bu balans sorğusu rədd edilsin?','Rədd et'))return;const r=await fetch('/api/admin?action=topups',{method:'POST',headers:H(),body:JSON.stringify({id,action:'reject'})});if(r.ok){loadTopups();toast('Sorğu rədd edildi.','red');}};});}
 async function loadStats(){const r=await fetch('/api/admin?action=stats',{headers:H()});if(r.status===401){logout();return;}const d=await r.json();$('#st_balance').textContent=money(d.balance);$('#st_orders').textContent=d.orderCount;$('#st_items').textContent=d.itemsSold;$('#st_products').textContent=d.productCount;if($('#st_users'))$('#st_users').textContent=d.userCount||0;const ob=$('#ordersBody');if(!d.recent.length)ob.innerHTML='<tr><td colspan="3" class="muted">Hele sifaris yoxdur.</td></tr>';else ob.innerHTML=d.recent.map(o=>`<tr><td>${new Date(o.created_at).toLocaleString('az')}</td><td>${(o.items||[]).map(i=>(i.emoji||'')+' '+i.name).join(', ')}</td><td>${money(o.total)}</td></tr>`).join('');
 const ub=$('#usersBody');if(ub){const us=d.users||[];if(!us.length)ub.innerHTML='<tr><td colspan="3" class="muted">İstifadəçi yoxdur.</td></tr>';else ub.innerHTML=us.map(u=>`<tr><td>${u.email||'—'}</td><td style="color:#22c55e;font-weight:700">${money(u.balance||0)}</td><td><div class="actions"><button class="btn sm green" onclick="setBalance('${(u.email||'').replace(/'/g,"")}','add')">+/−</button><button class="btn sm" onclick="setBalance('${(u.email||'').replace(/'/g,"")}','set')">Təyin et</button></div></td></tr>`).join('');}}
-async function loadProducts(){const r=await fetch('/api/admin?action=products',{headers:H()});if(r.status===401){logout();return;}const list=await r.json();$('#productList').innerHTML=list.map(p=>`<div class="prow" data-id="${p.id}"><div><div class="pname">${p.emoji||'📦'} ${p.name}</div><div class="pmeta">${p.id} · fayl: ${p.file_path||'—'}</div></div><div style="display:flex;align-items:center;gap:6px"><input type="number" value="${(p.price/100).toFixed(2)}" step="0.01" style="width:80px;margin:0" data-price>₼</div><div class="actions"><button class="btn sm green" data-save>Saxla</button><button class="btn sm red" data-del>Sil</button></div></div>`).join('');
-document.querySelectorAll('.prow').forEach(row=>{const id=row.dataset.id;row.querySelector('[data-save]').addEventListener('click',async()=>{const price=Math.round(parseFloat(row.querySelector('[data-price]').value)*100)||0;const r=await fetch('/api/admin?action=products',{method:'PUT',headers:H(),body:JSON.stringify({id,price})});if(r.ok){toast('Qiymət yeniləndi.','green');loadStats();}});row.querySelector('[data-del]').addEventListener('click',async()=>{if(!await uiConfirm('Bu məhsul silinsin?','Məhsulu sil'))return;const r=await fetch('/api/admin?action=products',{method:'DELETE',headers:H(),body:JSON.stringify({id})});if(r.ok){loadProducts();loadStats();toast('Məhsul silindi.','red');}});});}
+async function loadProducts(){const r=await fetch('/api/admin?action=products',{headers:H()});if(r.status===401){logout();return;}const list=await r.json();window._PRODUCTS=list;$('#productList').innerHTML=list.map(p=>`<div class="prow" data-id="${p.id}"><div><div class="pname">${p.emoji||'📦'} ${p.name}</div><div class="pmeta">${p.id} · fayl: ${p.file_path||'—'}</div></div><div style="display:flex;align-items:center;gap:6px"><input type="number" value="${(p.price/100).toFixed(2)}" step="0.01" style="width:80px;margin:0" data-price>₼</div><div class="actions"><button class="btn sm green" data-save>Saxla</button><button class="btn sm red" data-del>Sil</button></div></div>`).join('');
+document.querySelectorAll('#productList .prow').forEach(row=>{const id=row.dataset.id;row.querySelector('[data-save]').addEventListener('click',async()=>{const price=Math.round(parseFloat(row.querySelector('[data-price]').value)*100)||0;const r=await fetch('/api/admin?action=products',{method:'PUT',headers:H(),body:JSON.stringify({id,price})});if(r.ok){toast('Qiymət yeniləndi.','green');loadStats();}});row.querySelector('[data-del]').addEventListener('click',async()=>{if(!await uiConfirm('Bu məhsul silinsin?','Məhsulu sil'))return;const r=await fetch('/api/admin?action=products',{method:'DELETE',headers:H(),body:JSON.stringify({id})});if(r.ok){loadProducts();loadStats();toast('Məhsul silindi.','red');}});});
+renderSales(list);}
+
+// Müddətli endirimlər siyahısı
+function renderSales(list){
+  const box=$('#saleList');if(!box)return;
+  box.innerHTML=list.map(p=>{
+    const hasSale=p.sale_price!=null;
+    const saleM=hasSale?(p.sale_price/100).toFixed(2):'';
+    const endVal=p.sale_ends_at?new Date(p.sale_ends_at).toISOString().slice(0,16):'';
+    const status=hasSale?`<span style="color:#22c55e;font-size:.78rem">Aktiv: ${saleM} ₼${p.sale_ends_at?' · bitir: '+new Date(p.sale_ends_at).toLocaleString('az'):''}</span>`:'<span class="muted" style="font-size:.78rem">Endirim yoxdur</span>';
+    return `<div class="prow" data-sid="${p.id}" style="grid-template-columns:1fr auto auto auto"><div><div class="pname">${p.emoji||'📦'} ${p.name}</div><div class="pmeta">Normal: ${(p.price/100).toFixed(2)} ₼ · ${status}</div></div>`+
+      `<div style="display:flex;align-items:center;gap:4px"><input type="number" step="0.01" placeholder="end. qiymət" value="${saleM}" style="width:95px;margin:0" data-sale>₼</div>`+
+      `<input type="datetime-local" value="${endVal}" style="width:185px;margin:0" data-end>`+
+      `<div class="actions"><button class="btn sm green" data-savesale>Tətbiq et</button>${hasSale?'<button class="btn sm red" data-clearsale>Sil</button>':''}</div></div>`;
+  }).join('');
+  document.querySelectorAll('#saleList .prow').forEach(row=>{
+    const id=row.dataset.sid;
+    row.querySelector('[data-savesale]').onclick=async()=>{
+      const sale_price=Math.round(parseFloat(row.querySelector('[data-sale]').value)*100)||0;
+      if(!sale_price){toast('Endirimli qiymət yaz.','red');return;}
+      const sale_ends_at=row.querySelector('[data-end]').value||null;
+      const r=await fetch('/api/admin?action=sale',{method:'POST',headers:H(),body:JSON.stringify({id,sale_price,sale_ends_at})});
+      if(r.ok){toast('Endirim tətbiq olundu.','green');loadProducts();}else{const d=await r.json();toast('Xəta: '+(d.error||''),'red');}
+    };
+    const clr=row.querySelector('[data-clearsale]');
+    if(clr)clr.onclick=async()=>{const r=await fetch('/api/admin?action=sale',{method:'POST',headers:H(),body:JSON.stringify({id,clear:true})});if(r.ok){toast('Endirim silindi.','red');loadProducts();}};
+  });
+}
+
+// Kuponlar
+async function loadPromos(){
+  const r=await fetch('/api/admin?action=promos',{headers:H()});if(r.status===401){logout();return;}
+  const list=await r.json();const box=$('#promoList');
+  if(!list.length){box.innerHTML='<span class="muted">Hələ kupon yoxdur.</span>';return;}
+  box.innerHTML=list.map(p=>{
+    const exp=p.expires_at?new Date(p.expires_at).toLocaleDateString('az'):'müddətsiz';
+    const uses=p.max_uses!=null?`${p.used_count||0}/${p.max_uses}`:`${p.used_count||0}/∞`;
+    return `<div class="prow" data-code="${p.code}"><div><div class="pname">🎟️ ${p.code} — ${p.discount_percent}% ${p.active?'<span style="color:#22c55e">aktiv</span>':'<span style="color:#f87171">deaktiv</span>'}</div><div class="pmeta">İstifadə: ${uses} · bitmə: ${exp}</div></div><div class="actions"><button class="btn sm" data-toggle>${p.active?'Deaktiv et':'Aktiv et'}</button><button class="btn sm red" data-delp>Sil</button></div></div>`;
+  }).join('');
+  document.querySelectorAll('#promoList .prow').forEach(row=>{
+    const code=row.dataset.code;const p=list.find(x=>x.code===code);
+    row.querySelector('[data-toggle]').onclick=async()=>{const r=await fetch('/api/admin?action=promos',{method:'POST',headers:H(),body:JSON.stringify({code:p.code,discount_percent:p.discount_percent,active:!p.active,max_uses:p.max_uses,expires_at:p.expires_at})});if(r.ok){loadPromos();toast('Yeniləndi.','green');}};
+    row.querySelector('[data-delp]').onclick=async()=>{if(!await uiConfirm('Bu kupon silinsin?','Kuponu sil'))return;const r=await fetch('/api/admin?action=promos',{method:'DELETE',headers:H(),body:JSON.stringify({code})});if(r.ok){loadPromos();toast('Kupon silindi.','red');}};
+  });
+}
+$('#pcAdd').onclick=async()=>{
+  const code=$('#pcCode').value.trim().toUpperCase();
+  const discount_percent=parseInt($('#pcPercent').value,10)||0;
+  if(!code){toast('Kod yaz.','red');return;}
+  if(discount_percent<1||discount_percent>100){toast('Endirim 1-100 olmalıdır.','red');return;}
+  const max=$('#pcMax').value;const exp=$('#pcExp').value;
+  const r=await fetch('/api/admin?action=promos',{method:'POST',headers:H(),body:JSON.stringify({code,discount_percent,active:true,max_uses:max||null,expires_at:exp||null})});
+  if(r.ok){$('#pcCode').value='';$('#pcPercent').value='';$('#pcMax').value='';$('#pcExp').value='';loadPromos();toast('Kupon yadda saxlanıldı.','green');}
+  else{const d=await r.json();toast('Xəta: '+(d.error||''),'red');}
+};
 async function setBalance(email,mode){const cur=mode==='set'?'Yeni balans (₼) daxil et':'Əlavə/çıxılacaq məbləğ (₼) — mənfi də olar';const v=await uiPrompt(email+'\n'+cur,mode==='set'?'Balansı təyin et':'Balansı dəyiş');if(v===null||v==='')return;const amount=parseFloat(v);if(isNaN(amount)){toast('Düzgün rəqəm yaz.','red');return;}const r=await fetch('/api/admin?action=setbalance',{method:'POST',headers:H(),body:JSON.stringify({email,mode,amount})});const d=await r.json();if(!r.ok){toast('Xəta: '+(d.error||''),'red');return;}loadStats();toast('Balans yeniləndi: '+email,'green');}
 $('#loginBtn').addEventListener('click',login);$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')login();});$('#logoutBtn').addEventListener('click',logout);
 document.addEventListener('click',async e=>{if(e.target&&e.target.id==='resetOrdersBtn'){if(!await uiConfirm('Bütün son sifarişlər silinsin? (İstifadəçi balansları toxunulmayacaq)','Sifarişləri sıfırla'))return;const r=await fetch('/api/admin?action=resetorders',{method:'POST',headers:H()});if(r.ok){loadStats();toast('Son sifarişlər sıfırlandı.','green');}else{toast('Xəta baş verdi.','red');}}});

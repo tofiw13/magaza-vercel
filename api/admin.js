@@ -129,6 +129,57 @@ module.exports = async (req, res) => {
     return res.json({ ok: true, email, newBalance });
   }
 
+  // --- PROMOS (kupon idarəetməsi: GET/POST/DELETE) ---
+  if (action === 'promos') {
+    if (req.method === 'GET') {
+      const { data, error } = await supabase.from('promo_codes').select('*').order('created_at', { ascending: false });
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json(data || []);
+    }
+    if (req.method === 'POST') {
+      const code = (b.code || '').trim().toUpperCase();
+      if (!code) return res.status(400).json({ error: 'Kod lazımdır.' });
+      const percent = Math.max(0, Math.min(100, Math.round(Number(b.discount_percent) || 0)));
+      const row = {
+        code,
+        discount_percent: percent,
+        active: b.active === undefined ? true : !!b.active,
+        max_uses: (b.max_uses === '' || b.max_uses == null) ? null : Math.max(1, Math.round(Number(b.max_uses))),
+        expires_at: b.expires_at ? new Date(b.expires_at).toISOString() : null,
+      };
+      const { error } = await supabase.from('promo_codes').upsert(row, { onConflict: 'code' });
+      if (error) return res.status(400).json({ error: error.message });
+      return res.json({ ok: true });
+    }
+    if (req.method === 'DELETE') {
+      const code = (b.code || req.query.code || '').trim().toUpperCase();
+      if (!code) return res.status(400).json({ error: 'code lazımdır.' });
+      const { error } = await supabase.from('promo_codes').delete().eq('code', code);
+      if (error) return res.status(400).json({ error: error.message });
+      return res.json({ ok: true });
+    }
+    return res.status(405).json({ error: 'Metod dəstəklənmir.' });
+  }
+
+  // --- SALE (məhsula müddətli endirim) ---
+  if (action === 'sale') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'POST lazımdır.' });
+    const id = (b.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'id lazımdır.' });
+    if (b.clear) {
+      // Endirimi sil
+      const { error } = await supabase.from('products').update({ sale_price: null, sale_ends_at: null }).eq('id', id);
+      if (error) return res.status(400).json({ error: error.message });
+      return res.json({ ok: true });
+    }
+    const salePrice = Math.max(0, Math.round(Number(b.sale_price) || 0));
+    if (!salePrice) return res.status(400).json({ error: 'Endirimli qiymət lazımdır.' });
+    const endsAt = b.sale_ends_at ? new Date(b.sale_ends_at).toISOString() : null;
+    const { error } = await supabase.from('products').update({ sale_price: salePrice, sale_ends_at: endsAt }).eq('id', id);
+    if (error) return res.status(400).json({ error: error.message });
+    return res.json({ ok: true });
+  }
+
   // --- RESETORDERS (son sifarişləri sıfırla) ---
   if (action === 'resetorders') {
     if (req.method !== 'POST') return res.status(405).json({ error: 'POST lazımdır.' });

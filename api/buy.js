@@ -74,7 +74,14 @@ module.exports = async (req, res) => {
 
     const { data: products } = await supabase.from('products').select('*').in('id', ids);
     if (!products || !products.length) return res.status(400).json({ error: 'Məhsul tapılmadı.' });
-    const subtotal = products.reduce((s, p) => s + p.price, 0);
+    // Müddətli endirim aktivdirsə endirimli qiyməti götür
+    const now = Date.now();
+    const priceOf = (p) => {
+      const saleActive = p.sale_price != null && p.sale_price < p.price &&
+        (!p.sale_ends_at || new Date(p.sale_ends_at).getTime() > now);
+      return saleActive ? p.sale_price : p.price;
+    };
+    const subtotal = products.reduce((s, p) => s + priceOf(p), 0);
 
     // ----- PROMO KOD (varsa) -----
     const promoCodeRaw = (req.body?.promo_code || '').toString().trim().toUpperCase();
@@ -127,7 +134,7 @@ module.exports = async (req, res) => {
     }
 
     const orderKey = `bal_${user.id}_${Date.now()}`;
-    const orderItems = products.map((p) => ({ id: p.id, name: p.name, price: p.price, emoji: p.emoji }));
+    const orderItems = products.map((p) => ({ id: p.id, name: p.name, price: priceOf(p), emoji: p.emoji }));
     await supabase.from('orders').upsert(
       { order_key: orderKey, items: orderItems, total },
       { onConflict: 'order_key', ignoreDuplicates: true }
