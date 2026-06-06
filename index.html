@@ -610,7 +610,7 @@ $('#applyPromo').onclick=async()=>{
   if(!code)return toast('Promo kod daxil edin.','red');
   
   try{
-    const r=await fetch('/api/promo?code='+encodeURIComponent(code));
+    const r=await fetch('/api/store?action=promo&code='+encodeURIComponent(code));
     const d=await r.json();
     if(!r.ok)throw new Error(d.error||'Kod etibarsızdır');
     
@@ -638,7 +638,7 @@ async function toggleWishlist(productId){
   
   try{
     if(isIn){
-      await fetch('/api/wishlist',{
+      await fetch('/api/store?action=wishlist',{
         method:'DELETE',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
         body:JSON.stringify({product_id:productId})
@@ -646,7 +646,7 @@ async function toggleWishlist(productId){
       btn.classList.remove('active');
       toast('Sevimlilərdən çıxarıldı.','green');
     }else{
-      await fetch('/api/wishlist',{
+      await fetch('/api/store?action=wishlist',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
         body:JSON.stringify({product_id:productId})
@@ -662,7 +662,7 @@ async function toggleWishlist(productId){
 async function loadWishlist(){
   if(!session)return;
   try{
-    const r=await fetch('/api/wishlist',{headers:{'Authorization':'Bearer '+session.access_token}});
+    const r=await fetch('/api/store?action=wishlist',{headers:{'Authorization':'Bearer '+session.access_token}});
     const d=await r.json();
     wishlist=d.items||[];
     // UI-ı yenilə
@@ -693,7 +693,7 @@ async function rateProduct(productId,rating){
   }
   
   try{
-    const r=await fetch('/api/ratings',{
+    const r=await fetch('/api/store?action=ratings',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
       body:JSON.stringify({product_id:productId,rating})
@@ -751,7 +751,7 @@ async function init(){
 
 async function loadFlashSales(){
   try{
-    const r=await fetch('/api/flash-sales');
+    const r=await fetch('/api/store?action=flash-sales');
     const sales=await r.json();
     if(sales.length>0){
       const sale=sales[0];
@@ -1011,7 +1011,7 @@ async function openWishlistModal(){
   $('#wishlistOverlay').classList.add('show');
   $('#wishlistList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Yüklənir...</p>';
   try{
-    const r=await fetch('/api/wishlist',{headers:{'Authorization':'Bearer '+session.access_token}});
+    const r=await fetch('/api/store?action=wishlist',{headers:{'Authorization':'Bearer '+session.access_token}});
     const d=await r.json();
     const items=d.items||[];
     if(!items.length){$('#wishlistList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Sevimlilər siyahısı boşdur.</p>';return;}
