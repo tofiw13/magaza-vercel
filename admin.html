@@ -18,6 +18,12 @@ input:focus,textarea:focus{border-color:var(--accent2)}
 .stat .n{font-size:1.7rem;font-weight:700}.stat .c{font-size:.8rem;color:var(--muted)}
 .stat.balance{background:linear-gradient(135deg,rgba(34,197,94,.18),rgba(34,197,94,.05));border-color:rgba(34,197,94,.4)}.stat.balance .n{color:var(--accent)}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}.card h2{font-size:1.1rem;margin-bottom:14px}
+/* Tab (səhifə) naviqasiyası */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab-btn{background:transparent;border:1px solid transparent;border-bottom:none;color:var(--muted);padding:10px 16px;border-radius:10px 10px 0 0;cursor:pointer;font-size:.9rem;font-weight:600;margin-bottom:-1px;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{background:var(--card);border-color:var(--border);color:var(--text)}
+.tab-panel{display:none}.tab-panel.active{display:block}
 table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--border)}th{color:var(--muted);font-size:.78rem;text-transform:uppercase}
 .prow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
 .prow .pname{font-weight:600}.prow .pmeta{font-size:.78rem;color:var(--muted)}.actions{display:flex;gap:6px}
@@ -47,11 +53,33 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{text-align:left
 <div class="stat"><div class="n" id="st_items">0</div><div class="c">Satilan</div></div>
 <div class="stat"><div class="n" id="st_products">0</div><div class="c">Kataloq</div></div>
 <div class="stat"><div class="n" id="st_users">0</div><div class="c">İstifadəçi</div></div></div>
-<div class="card"><h2>👥 İstifadəçilər və balansları</h2><table><thead><tr><th>Email</th><th>Balans</th><th>İdarəetmə</th></tr></thead><tbody id="usersBody"><tr><td colspan="3" class="muted">Yüklənir...</td></tr></tbody></table></div>
-<div class="card"><h2>💰 Balans sorğuları (təsdiq)</h2><div id="topupsList" class="muted">Yüklənir...</div></div>
-<div class="card"><h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px">Son sifarisler <button class="btn sm red" id="resetOrdersBtn" style="font-weight:600">🗑️ Sıfırla</button></h2><table><thead><tr><th>Tarix</th><th>Mehsullar</th><th>Mebleg</th></tr></thead><tbody id="ordersBody"><tr><td colspan="3" class="muted">Hele sifaris yoxdur.</td></tr></tbody></table></div>
-<div class="card"><h2>Mehsullari idare et</h2><div id="productList"></div></div>
 
+<div class="tabs">
+<button class="tab-btn active" data-tab="users">👥 İstifadəçilər</button>
+<button class="tab-btn" data-tab="topups">💰 Balans sorğuları</button>
+<button class="tab-btn" data-tab="orders">📦 Sifarişlər</button>
+<button class="tab-btn" data-tab="products">🛍️ Məhsullar</button>
+<button class="tab-btn" data-tab="coupons">🎟️ Kuponlar</button>
+<button class="tab-btn" data-tab="sales">⏰ Müddətli endirimlər</button>
+</div>
+
+<div class="tab-panel active" data-panel="users">
+<div class="card"><h2>👥 İstifadəçilər və balansları</h2><table><thead><tr><th>Email</th><th>Balans</th><th>İdarəetmə</th></tr></thead><tbody id="usersBody"><tr><td colspan="3" class="muted">Yüklənir...</td></tr></tbody></table></div>
+</div>
+
+<div class="tab-panel" data-panel="topups">
+<div class="card"><h2>💰 Balans sorğuları (təsdiq)</h2><div id="topupsList" class="muted">Yüklənir...</div></div>
+</div>
+
+<div class="tab-panel" data-panel="orders">
+<div class="card"><h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px">Son sifarisler <button class="btn sm red" id="resetOrdersBtn" style="font-weight:600">🗑️ Sıfırla</button></h2><table><thead><tr><th>Tarix</th><th>Mehsullar</th><th>Mebleg</th></tr></thead><tbody id="ordersBody"><tr><td colspan="3" class="muted">Hele sifaris yoxdur.</td></tr></tbody></table></div>
+</div>
+
+<div class="tab-panel" data-panel="products">
+<div class="card"><h2>Mehsullari idare et</h2><div id="productList"></div></div>
+</div>
+
+<div class="tab-panel" data-panel="coupons">
 <div class="card"><h2>🎟️ Endirim kuponları</h2>
 <div class="addgrid" style="grid-template-columns:1fr 1fr 1fr 1fr;align-items:end;margin-bottom:14px">
 <div><label>Kod</label><input id="pcCode" placeholder="məs: SALAM10" style="margin:0;text-transform:uppercase"></div>
@@ -62,10 +90,13 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{text-align:left
 <button class="btn green sm" id="pcAdd">+ Kupon əlavə et / yenilə</button>
 <div id="promoList" style="margin-top:14px"><span class="muted">Yüklənir...</span></div>
 </div>
+</div>
 
+<div class="tab-panel" data-panel="sales">
 <div class="card"><h2>⏰ Müddətli endirimlər (məhsullara)</h2>
 <p class="muted" style="margin-bottom:12px">Hər məhsul üçün endirimli qiymət və bitmə tarixi təyin et. Bitmə tarixi boş olarsa, müddətsiz olur.</p>
 <div id="saleList"></div>
+</div>
 </div>
 </div></div>
 <script>
@@ -144,5 +175,11 @@ async function setBalance(email,mode){const cur=mode==='set'?'Yeni balans (₼) 
 $('#loginBtn').addEventListener('click',login);$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')login();});$('#logoutBtn').addEventListener('click',logout);
 document.addEventListener('click',async e=>{if(e.target&&e.target.id==='resetOrdersBtn'){if(!await uiConfirm('Bütün son sifarişlər silinsin? (İstifadəçi balansları toxunulmayacaq)','Sifarişləri sıfırla'))return;const r=await fetch('/api/admin?action=resetorders',{method:'POST',headers:H()});if(r.ok){loadStats();toast('Son sifarişlər sıfırlandı.','green');}else{toast('Xəta baş verdi.','red');}}});
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
+// Tab (səhifə) keçidi
+document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',()=>{
+  const t=btn.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b===btn));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.dataset.panel===t));
+});});
 if(TOKEN)showDash();
 </script></body></html>
