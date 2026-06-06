@@ -89,6 +89,19 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
 .points-row{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:.86rem}
 .points-row input[type=checkbox]{width:auto}
 .points-pill{background:linear-gradient(135deg,rgba(251,191,36,.2),rgba(251,191,36,.06));border:1px solid rgba(251,191,36,.4);color:#fbbf24;font-weight:700;padding:5px 11px;border-radius:20px;font-size:.85rem}
+/* Vahid cüzdan kartı (balans + xal yan-yana) */
+.wallet{display:inline-flex;align-items:stretch;background:var(--card2);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.wallet .seg{display:flex;flex-direction:column;justify-content:center;padding:6px 14px;line-height:1.15}
+.wallet .seg .lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:4px}
+.wallet .seg .val{font-size:.98rem;font-weight:800}
+.wallet .seg.bal-seg{background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(34,197,94,.02))}
+.wallet .seg.bal-seg .val{color:var(--accent)}
+.wallet .seg.pts-seg{background:linear-gradient(135deg,rgba(251,191,36,.16),rgba(251,191,36,.02))}
+.wallet .seg.pts-seg .val{color:#fbbf24}
+.wallet .divline{width:1px;background:var(--border)}
+.wallet .topup-btn{border:none;background:var(--accent);color:#06231a;font-size:1.2rem;font-weight:800;line-height:1;cursor:pointer;padding:0 14px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.wallet .topup-btn:hover{filter:brightness(1.08)}
+@media(max-width:600px){.wallet .seg{padding:5px 10px}.wallet .seg .val{font-size:.9rem}.wallet .topup-btn{padding:0 11px}}
 /* Toast bildiriş (aşağı orta) */
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);z-index:90;padding:14px 24px;border-radius:12px;font-weight:700;font-size:.95rem;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 10px 30px rgba(0,0,0,.4);text-align:center;max-width:90vw}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -395,8 +408,12 @@ async function refreshUser(){
   try{const {data}=await sb.from('profiles').select('balance,points').eq('id',session.user.id).single();bal=data?.balance||0;myPoints=data?.points||0;}catch(e){}
   const initial=(session.user.email||'?').charAt(0);
   nav.innerHTML=`<button class="theme-btn" id="themeBtn" title="Tema dəyiş">🌙</button>`+
-    `<span class="points-pill" title="Sadiqlik xalları">⭐ ${myPoints}</span>`+
-    `<span class="bal">💰 ${money(bal)} <button class="bal-add" id="balAddBtn" title="Balans artır">+</button></span>`+
+    `<div class="wallet">`+
+      `<div class="seg bal-seg"><span class="lbl">💰 Balans</span><span class="val">${money(bal)}</span></div>`+
+      `<div class="divline"></div>`+
+      `<div class="seg pts-seg"><span class="lbl">⭐ Xal</span><span class="val">${myPoints}</span></div>`+
+      `<button class="topup-btn" id="balAddBtn" title="Balans artır">+</button>`+
+    `</div>`+
     `<div class="avatar-circle" title="${session.user.email||''}">${initial}</div>`+
     `<div class="menu-wrap"><button class="menu-btn" id="menuBtn" title="Menyu"><span></span><span></span><span></span></button>`+
     `<div class="menu-drop" id="menuDrop">`+
