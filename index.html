@@ -301,10 +301,25 @@ function startCountdown(){
   tick();cdTimer=setInterval(tick,1000);
 }
 
+// Texniki işlər ekranı (maintenance)
+function showMaintenance(){
+  document.body.innerHTML=`<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(900px 400px at 50% -50px,rgba(99,102,241,.25),transparent),var(--bg)">
+    <div style="max-width:460px;text-align:center">
+      <div style="font-size:4rem;margin-bottom:14px">🛠️</div>
+      <h1 style="font-size:1.7rem;margin-bottom:12px">Texniki işlər aparılır</h1>
+      <p style="color:var(--muted);font-size:1rem;line-height:1.6">Saytımızda yeniliklər edirik. Bir az sonra yenidən gəl — daha yaxşı təcrübə ilə qarşılayacağıq! 💙</p>
+      <p style="margin-top:22px"><a href="https://instagram.com/onlinebeledci" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;font-weight:600">📸 @onlinebeledci</a></p>
+    </div>
+  </div>`;
+}
+
 async function init(){
   $('#year').textContent=new Date().getFullYear();
   const tb=$('#themeBtn');if(tb)tb.onclick=toggleTheme;
   CFG=await fetch('/api/config').then(r=>r.json()).catch(()=>({}));
+  // Texniki işlər rejimi: aktivdirsə saytı bağla (admin "?admin=1" ilə baxa bilər)
+  const bypass=new URLSearchParams(location.search).has('admin');
+  if(CFG.maintenance && !bypass){showMaintenance();return;}
   $('#payInfo').textContent=CFG.paymentInfo||'';
   startCountdown();
   if(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase){

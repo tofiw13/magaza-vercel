@@ -1,0 +1,25 @@
+İLLİK BÜDCƏ & YIĞIM İZLƏYİCİSİ,,,,,,,,,,,,,
+İl:,2026,,,,,,,,,,,,
+,,,,,,,,,,,,,
+KATEQORİYA,Yanvar,Fevral,Mart,Aprel,May,İyun,İyul,Avqust,Sentyabr,Oktyabr,Noyabr,Dekabr,İL CƏMİ
+=== GƏLİR ===,,,,,,,,,,,,,
+Maaş / Təqaüd,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B6:M6)
+Əlavə gəlir,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B7:M7)
+Digər,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B8:M8)
+CƏMİ GƏLİR,=SUM(B6:B8),=SUM(C6:C8),=SUM(D6:D8),=SUM(E6:E8),=SUM(F6:F8),=SUM(G6:G8),=SUM(H6:H8),=SUM(I6:I8),=SUM(J6:J8),=SUM(K6:K8),=SUM(L6:L8),=SUM(M6:M8),=SUM(N6:N8)
+,,,,,,,,,,,,,
+=== XƏRC ===,,,,,,,,,,,,,
+Kirayə,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B12:M12)
+Kommunal,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B13:M13)
+Ərzaq,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B14:M14)
+Nəqliyyat,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B15:M15)
+Təhsil,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B16:M16)
+Səhiyyə,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B17:M17)
+Əyləncə,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B18:M18)
+Digər,0,0,0,0,0,0,0,0,0,0,0,0,=SUM(B19:M19)
+CƏMİ XƏRC,=SUM(B12:B19),=SUM(C12:C19),=SUM(D12:D19),=SUM(E12:E19),=SUM(F12:F19),=SUM(G12:G19),=SUM(H12:H19),=SUM(I12:I19),=SUM(J12:J19),=SUM(K12:K19),=SUM(L12:L19),=SUM(M12:M19),=SUM(N12:N19)
+,,,,,,,,,,,,,
+=== NƏTİCƏ ===,,,,,,,,,,,,,
+Aylıq qalıq,=B9-B20,=C9-C20,=D9-D20,=E9-E20,=F9-F20,=G9-G20,=H9-H20,=I9-I20,=J9-J20,=K9-K20,=L9-L20,=M9-M20,=N9-N20
+,,,,,,,,,,,,,
+TÖVSİYƏ: Hər ay xanaları doldur. "İL CƏMİ" sütunu avtomatik hesablanır. İlin sonunda hansı kateqoriyaya nə qədər xərclədiyini gör.,,,,,,,,,,,,,

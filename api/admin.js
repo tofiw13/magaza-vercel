@@ -209,6 +209,16 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Metod dəstəklənmir.' });
   }
 
+  // --- MAINTENANCE (texniki işlər rejimi: yandır/söndür) ---
+  if (action === 'maintenance') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'POST lazımdır.' });
+    const on = b.on === true || b.on === '1' || b.on === 1;
+    const { error } = await supabase.from('app_settings').upsert(
+      { key: 'maintenance', value: on ? '1' : '0' }, { onConflict: 'key' });
+    if (error) return res.status(400).json({ error: error.message });
+    return res.json({ ok: true, maintenance: on });
+  }
+
   // --- RESETORDERS (son sifarişləri sıfırla) ---
   if (action === 'resetorders') {
     if (req.method !== 'POST') return res.status(405).json({ error: 'POST lazımdır.' });

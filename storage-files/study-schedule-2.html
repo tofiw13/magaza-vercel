@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gündəlik Tapşırıq & Öyrənmə Planlayıcısı</title>
+<style>
+  @media print{ .hint,.toolbar,.builder{display:none!important} body{background:#fff;padding:0} .sheet{box-shadow:none} }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+  body{background:#fdf2f8;padding:20px;color:#0f172a}
+  .hint{max-width:860px;margin:0 auto 14px;background:#fce7f3;border:1px solid #fbcfe8;color:#9d174d;padding:14px 18px;border-radius:10px;font-size:14px;line-height:1.5}
+  .toolbar{max-width:860px;margin:0 auto 14px;display:flex;gap:10px;flex-wrap:wrap}
+  .toolbar button{background:#db2777;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px}
+  .toolbar button.alt{background:#475569}
+  .sheet{max-width:860px;margin:0 auto;background:#fff;border-radius:14px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.1)}
+  .head{text-align:center;border-bottom:2px solid #fce7f3;padding-bottom:18px;margin-bottom:22px}
+  .head h1{font-size:24px;color:#9d174d}
+  .head .sub{color:#64748b;font-size:13px;margin-top:4px}
+  .head .date{margin-top:10px;font-size:14px;color:#db2777;font-weight:600}
+  .goal{background:#fdf2f8;border:1px dashed #f9a8d4;border-radius:10px;padding:14px 16px;margin-bottom:20px}
+  .goal .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#be185d;font-weight:700;margin-bottom:6px}
+  .goal p{font-size:14px;color:#374151;min-height:20px}
+  .blocks{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .block{border:1px solid #f3e8ee;border-radius:12px;padding:16px}
+  .block h3{font-size:14px;color:#9d174d;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .task{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #faf0f5;font-size:13.5px}
+  .task:last-child{border-bottom:none}
+  .task input[type=checkbox]{width:17px;height:17px;accent-color:#db2777;cursor:pointer;flex-shrink:0}
+  .task .t{flex:1;color:#374151}
+  .full{grid-column:1/-1}
+  [contenteditable]:hover{background:#fef9c3;border-radius:3px}
+  [contenteditable]:focus{outline:2px solid #f9a8d4;border-radius:3px;background:#fff}
+</style>
+</head>
+<body>
+<div class="hint">
+  💡 <b>Necə işləyir:</b> Tarixi, gündəlik hədəfini və tapşırıqları öz əlinlə yaz. Tamamladıqca qutuları işarələ ✓.
+  Çap etmək / saxlamaq üçün <b>"⬇️ PDF kimi yüklə"</b>. Hər gün üçün bir nüsxə çıxar.
+</div>
+<div class="toolbar">
+  <button onclick="window.print()">⬇️ PDF kimi yüklə</button>
+  <button class="alt" onclick="location.reload()">🔄 Sıfırla</button>
+</div>
+
+<div class="sheet">
+  <div class="head">
+    <h1>📅 Gündəlik Plan</h1>
+    <div class="sub">Hədəfini yaz · Tapşırıqları böl · Tamamla</div>
+    <div class="date" contenteditable="true">Tarix: ___ / ___ / 2026</div>
+  </div>
+
+  <div class="goal">
+    <div class="lbl">🎯 Bugünkü əsas hədəf</div>
+    <p contenteditable="true">Bu gün mütləq tamamlamaq istədiyin 1 əsas işi yaz...</p>
+  </div>
+
+  <div class="blocks">
+    <div class="block">
+      <h3>🌅 Səhər</h3>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Tapşırıq 1</span></div>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Tapşırıq 2</span></div>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Tapşırıq 3</span></div>
+    </div>
+    <div class="block">
+      <h3>☀️ Günorta</h3>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Tapşırıq 1</span></div>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Tapşırıq 2</span></div>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Tapşırıq 3</span></div>
+    </div>
+    <div class="block">
+      <h3>🌆 Axşam</h3>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Tapşırıq 1</span></div>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Tapşırıq 2</span></div>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Tapşırıq 3</span></div>
+    </div>
+    <div class="block">
+      <h3>📖 Öyrənmə / Mütaliə</h3>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Oxunacaq mövzu / kitab</span></div>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Təkrar ediləcək</span></div>
+      <div class="task"><input type="checkbox"><span class="t" contenteditable="true">Qeyd / xülasə</span></div>
+    </div>
+    <div class="block full">
+      <h3>📝 Günün qeydləri</h3>
+      <p contenteditable="true" style="font-size:13.5px;color:#374151;min-height:50px">Bu gün nə öyrəndin? Sabaha nə qalır? Burda yaz...</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

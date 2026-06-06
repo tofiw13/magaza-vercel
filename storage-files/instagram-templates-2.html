@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30 Instagram Story & Reels İdeyası</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+  body{background:#faf5ff;color:#1f2937;padding:22px}
+  .head{max-width:1180px;margin:0 auto 18px;text-align:center}
+  .head h1{font-size:1.7rem;margin-bottom:6px;color:#6b21a8}
+  .head p{color:#6b7280;font-size:.92rem;max-width:660px;margin:0 auto}
+  .grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+  .card{background:#fff;border:1px solid #ede0f7;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 4px 14px rgba(107,33,168,.06)}
+  .visual{aspect-ratio:9/16;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:22px;position:relative;color:#fff}
+  .visual .num{position:absolute;top:12px;left:14px;font-size:11px;opacity:.8;font-weight:700}
+  .visual .type{position:absolute;top:12px;right:14px;font-size:10px;background:rgba(255,255,255,.25);padding:3px 9px;border-radius:20px;font-weight:600}
+  .visual h2{font-size:21px;font-weight:800;line-height:1.2;margin-bottom:10px}
+  .visual p{font-size:13px;opacity:.95;line-height:1.45}
+  .body{padding:14px 16px}
+  .body .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:#9333ea;margin-bottom:4px;font-weight:700}
+  .body .tip{font-size:12.5px;color:#4b5563;line-height:1.5}
+  @media print{body{background:#fff}.card{break-inside:avoid;box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>🎬 30 Story & Reels İdeyası</h1>
+  <p>Şaquli (9:16) format üçün hazır ideyalar — Story və Reels üçün. Hər kart: vizual ideya + qısa məsləhət. Canva-da təkrarla və paylaş.</p>
+</div>
+<div class="grid" id="grid"></div>
+
+<script>
+const palettes=[['#9333ea','#c026d3'],['#f43f5e','#fb7185'],['#0ea5e9','#6366f1'],['#22c55e','#14b8a6'],['#f59e0b','#f43f5e'],['#6366f1','#8b5cf6'],['#ec4899','#f43f5e'],['#14b8a6','#0ea5e9'],['#8b5cf6','#d946ef'],['#ef4444','#f59e0b']];
+const items=[
+ {ty:'Story',t:'SUAL QUTUSU',s:'İzləyicidən soruş',tip:'Sual stikeri əlavə et: "Hansı mövzunu istəyirsən?" Cavabları sonrakı postlara çevir.'},
+ {ty:'Reels',t:'3 MƏSLƏHƏT',s:'15 saniyə',tip:'Sürətli 3 məsləhəti mətn overlay ilə göstər. Trend musiqi qoy.'},
+ {ty:'Story',t:'SORĞU',s:'Bəli / Xeyr',tip:'Poll stikeri ilə sadə sual ver. Engagement-i artırır.'},
+ {ty:'Reels',t:'ÖNCƏ → SONRA',s:'Transformasiya',tip:'2 saniyə "öncə", sonra "sonra". Keçid effekti istifadə et.'},
+ {ty:'Story',t:'GÜNÜN SİTATI',s:'İlham ver',tip:'Estetik fonda motivasiya sözü. Brendin rəngini saxla.'},
+ {ty:'Reels',t:'NECƏ ETMƏLİ',s:'Mini təlimat',tip:'Addım-addım göstər. Hər addımı mətnlə yaz, sürətli kəs.'},
+ {ty:'Story',t:'GERİ SAYIM',s:'Kampaniya',tip:'Countdown stikeri qoy. "Endirim X gün sonra bitir!"'},
+ {ty:'Reels',t:'SƏHV vs DÜZGÜN',s:'Müqayisə',tip:'Sol tərəf səhv, sağ düzgün. Bölünmüş ekran effekti.'},
+ {ty:'Story',t:'SWIPE UP',s:'Linkə yönlət',tip:'Link stikeri ilə məhsula/sayta yönlət. Ox emoji əlavə et.'},
+ {ty:'Reels',t:'TOP 5',s:'Siyahı videosu',tip:'5 elementi sürətlə göstər. Sonuncunu ən güclü saxla.'},
+ {ty:'Story',t:'BU GÜN...',s:'Gündəlik həyat',tip:'Pərdə arxasını göstər. İzləyici ilə yaxınlıq qurur.'},
+ {ty:'Reels',t:'TREND SƏS',s:'Trend istifadə et',tip:'Populyar audio tap, öz mövzuna uyğunlaşdır. Reach artır.'},
+ {ty:'Story',t:'RƏY PAYLAŞ',s:'Sosial sübut',tip:'Müştəri mesajının skrinşotunu paylaş (icazə ilə).'},
+ {ty:'Reels',t:'5 SƏHV',s:'Xəbərdarlıq',tip:'"Bunları etmə!" formatı. Hər səhvi qısa mətnlə.'},
+ {ty:'Story',t:'TEST / QUIZ',s:'Bilik yarışı',tip:'Quiz stikeri ilə əyləncəli sual. Cavabı sonra açıqla.'},
+ {ty:'Reels',t:'GÜNÜM',s:'Vlog tərzi',tip:'Günün 4-5 anını birləşdir. Sürətli montaj + musiqi.'},
+ {ty:'Story',t:'YENİ MƏHSUL',s:'Elan',tip:'Məhsulun qısa videosu + "Link bioda" stikeri.'},
+ {ty:'Reels',t:'FAKT',s:'Maraqlı bilgi',tip:'"Bunu bilirdinmi?" ilə başla. Şok fakt = paylaşım.'},
+ {ty:'Story',t:'TƏŞƏKKÜR',s:'İzləyiciyə',tip:'Milestone qeyd et: "1000 izləyici, sağ olun!" Şən fon.'},
+ {ty:'Reels',t:'HƏLL',s:'Problem → həll',tip:'Ümumi problemi göstər, sonra həllini. Dəyər ver.'},
+ {ty:'Story',t:'CANLI ELAN',s:'Yayım xəbəri',tip:'"Bu axşam 20:00 canlı!" Xatırlatma stikeri qoy.'},
+ {ty:'Reels',t:'SÜRƏTLİ İPUCU',s:'10 saniyə',tip:'1 dəyərli ipucu, qısa və konkret. Loop olsun.'},
+ {ty:'Story',t:'BU vs O',s:'Seçim',tip:'2 variant göstər, poll ilə səsləşdir.'},
+ {ty:'Reels',t:'MOTİVASİYA',s:'İlham videosu',tip:'Güclü mesaj + emosional musiqi + mətn overlay.'},
+ {ty:'Story',t:'SUAL-CAVAB',s:'Q&A',tip:'"Sualını yaz" stikeri, cavabları story-də paylaş.'},
+ {ty:'Reels',t:'PROSES',s:'Necə hazırlanır',tip:'Bir işin başlanğıcdan sonuna prosesini sürətləndir.'},
+ {ty:'Story',t:'HƏDİYYƏ',s:'Giveaway',tip:'"Etiketlə və qazan!" Qaydaları aydın yaz.'},
+ {ty:'Reels',t:'GÜLMƏLİ',s:'Yumor',tip:'Mövzuna uyğun yüngül yumor. İnsani və əlçatan ol.'},
+ {ty:'Story',t:'XATIRLATMA',s:'Qayğı mesajı',tip:'"Su iç, ara ver 💙" — izləyici ilə insani bağ.'},
+ {ty:'Reels',t:'ÇAĞIRIŞ',s:'CTA ilə bitir',tip:'Sonda aydın çağırış: "İzlə, saxla, paylaş!"'}
+];
+const grid=document.getElementById('grid');
+items.forEach((p,i)=>{
+  const pal=palettes[i%palettes.length];
+  const el=document.createElement('div');el.className='card';
+  el.innerHTML=`<div class="visual" style="background:linear-gradient(135deg,${pal[0]},${pal[1]})">
+    <div class="num">#${String(i+1).padStart(2,'0')}</div><div class="type">${p.ty}</div>
+    <h2>${p.t}</h2><p>${p.s}</p></div>
+    <div class="body"><div class="lbl">💡 Məsləhət</div><div class="tip">${p.tip}</div></div>`;
+  grid.appendChild(el);
+});
+</script>
+</body>
+</html>

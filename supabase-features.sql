@@ -66,3 +66,35 @@ alter table public.products add column if not exists variants jsonb default '[]'
 
 -- Kampaniya faizi app_settings-də saxlanılır (campaign_percent açarı).
 -- Ayrıca sütun lazım deyil — mövcud app_settings cədvəlindən istifadə olunur.
+
+
+-- ============================================================
+--  HƏR MƏHSULA HAZIR 2-Cİ VARİANT ƏLAVƏ ET
+--  Birinci variant = mövcud fayl, ikinci variant = yeni "-2" fayl.
+--  Beləcə eyni istifadəçi məhsulu təkrar alanda fərqli fayl alır.
+--  (Bu fayllar Storage "downloads" bucket-inə yüklənməlidir.)
+-- ============================================================
+update public.products set variants = '[
+  {"name":"Klassik (tünd/göy)","file_path":"cv-template.html"},
+  {"name":"Modern (yaşıl)","file_path":"cv-template-2.html"}
+]'::jsonb where id = 'cv-template';
+
+update public.products set variants = '[
+  {"name":"Həftəlik cədvəl","file_path":"study-schedule.html"},
+  {"name":"Gündəlik planlayıcı","file_path":"study-schedule-2.html"}
+]'::jsonb where id = 'study-schedule';
+
+update public.products set variants = '[
+  {"name":"Aylıq büdcə","file_path":"budget-template.csv"},
+  {"name":"İllik büdcə izləyici","file_path":"budget-template-2.csv"}
+]'::jsonb where id = 'budget-sheet';
+
+update public.products set variants = '[
+  {"name":"Feed postları (30)","file_path":"instagram-templates.html"},
+  {"name":"Story & Reels (30)","file_path":"instagram-templates-2.html"}
+]'::jsonb where id = 'instagram-pack';
+
+update public.products set variants = '[
+  {"name":"Bələdçi versiyası","file_path":"ebook-online-earning.md"},
+  {"name":"İş dəftəri versiyası","file_path":"ebook-online-earning-2.md"}
+]'::jsonb where id = 'ebook-freelance';

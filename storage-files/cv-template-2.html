@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peşəkar CV Şablonu — Modern</title>
+<style>
+  @media print{ .hint,.toolbar{display:none!important} body{background:#fff;padding:0} .page{box-shadow:none;margin:0} }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Georgia','Segoe UI',Arial,serif}
+  body{background:#eef2f0;padding:20px;color:#1f2937}
+  .hint{max-width:780px;margin:0 auto 14px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:14px 18px;border-radius:10px;font-size:14px;line-height:1.5}
+  .toolbar{max-width:780px;margin:0 auto 14px;display:flex;gap:10px;flex-wrap:wrap}
+  .toolbar button{background:#059669;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+  .toolbar button.alt{background:#475569}
+  .page{max-width:780px;margin:0 auto;background:#fff;min-height:1120px;box-shadow:0 12px 40px rgba(0,0,0,.14);padding:0}
+  .head{background:linear-gradient(135deg,#065f46,#0d9488);color:#fff;padding:46px 48px 34px;text-align:center}
+  .avatar{width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.15);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:42px;overflow:hidden;border:3px solid rgba(255,255,255,.4)}
+  .avatar img{width:100%;height:100%;object-fit:cover}
+  .name{font-size:32px;font-weight:700;letter-spacing:1px}
+  .role{font-size:16px;margin-top:6px;color:#d1fae5;font-style:italic}
+  .contact{margin-top:16px;font-size:13px;color:#ecfdf5;font-family:'Segoe UI',Arial,sans-serif}
+  .contact span{margin:0 8px;white-space:nowrap}
+  .body{padding:38px 48px}
+  .body h3{font-size:15px;text-transform:uppercase;letter-spacing:1.5px;color:#065f46;border-bottom:2px solid #0d9488;padding-bottom:6px;margin:22px 0 14px}
+  .body h3:first-child{margin-top:0}
+  .item{margin-bottom:16px}
+  .item .top{display:flex;justify-content:space-between;font-weight:700;font-size:14.5px;color:#0f172a;gap:10px;font-family:'Segoe UI',Arial,sans-serif}
+  .item .org{font-size:13px;color:#0d9488;margin:2px 0 5px;font-weight:600;font-family:'Segoe UI',Arial,sans-serif}
+  .item p,.body p{font-size:13.5px;line-height:1.65;color:#374151;font-family:'Segoe UI',Arial,sans-serif}
+  .tags{display:flex;flex-wrap:wrap;gap:8px}
+  .tags span{background:#ecfdf5;color:#065f46;padding:5px 12px;border-radius:20px;font-size:12.5px;font-family:'Segoe UI',Arial,sans-serif}
+  [contenteditable]:hover{background:#fef9c3;border-radius:3px}
+  [contenteditable]:focus{outline:2px solid #6ee7b7;border-radius:3px;background:#fff}
+</style>
+</head>
+<body>
+<div class="hint">
+  💡 <b>Necə istifadə etməli:</b> İstənilən mətnə klikləyib öz məlumatınla əvəz et. Şəkil üçün "📷 Şəkil əlavə et" düyməsinə bas.
+  Hazır olanda <b>"⬇️ PDF kimi yüklə"</b> düyməsini bas (Cmd/Ctrl+P → "Save as PDF").
+</div>
+<div class="toolbar">
+  <button onclick="window.print()">⬇️ PDF kimi yüklə</button>
+  <button class="alt" onclick="document.getElementById('photoInput').click()">📷 Şəkil əlavə et</button>
+  <input type="file" id="photoInput" accept="image/*" style="display:none">
+</div>
+
+<div class="page">
+  <div class="head">
+    <div class="avatar" id="avatar">📷</div>
+    <div class="name" contenteditable="true">Ad Soyad</div>
+    <div class="role" contenteditable="true">Peşə / Vəzifə (məs: Qrafik Dizayner)</div>
+    <div class="contact">
+      <span contenteditable="true">📞 +994 50 000 00 00</span>
+      <span contenteditable="true">✉️ ad.soyad@email.com</span>
+      <span contenteditable="true">📍 Bakı, Azərbaycan</span>
+    </div>
+  </div>
+
+  <div class="body">
+    <h3>Haqqımda</h3>
+    <p contenteditable="true">2–3 cümləlik qısa təqdimat: kimsən, hansı bacarıqların var və hansı vəzifə axtarırsan. Konkret və güclü ifadələr işlət.</p>
+
+    <h3>İş təcrübəsi</h3>
+    <div class="item">
+      <div class="top"><span contenteditable="true">Vəzifə adı</span><span contenteditable="true">2024 – İndi</span></div>
+      <div class="org" contenteditable="true">Şirkət adı · Şəhər</div>
+      <p contenteditable="true">• Gördüyün işi və nailiyyəti rəqəmlərlə yaz (məs: satışları 20% artırdım).</p>
+    </div>
+    <div class="item">
+      <div class="top"><span contenteditable="true">Vəzifə adı</span><span contenteditable="true">2022 – 2024</span></div>
+      <div class="org" contenteditable="true">Şirkət adı · Şəhər</div>
+      <p contenteditable="true">• Əsas məsuliyyətlərini və əldə etdiyin nəticələri qısa yaz.</p>
+    </div>
+
+    <h3>Təhsil</h3>
+    <div class="item">
+      <div class="top"><span contenteditable="true">Universitet / Məktəb</span><span contenteditable="true">2021 – 2025</span></div>
+      <div class="org" contenteditable="true">İxtisas / Fakültə</div>
+    </div>
+
+    <h3>Bacarıqlar</h3>
+    <div class="tags">
+      <span contenteditable="true">Microsoft Office</span>
+      <span contenteditable="true">Komanda işi</span>
+      <span contenteditable="true">Problem həlli</span>
+      <span contenteditable="true">Ünsiyyət</span>
+      <span contenteditable="true">Vaxt idarəetməsi</span>
+    </div>
+
+    <h3>Dillər</h3>
+    <p contenteditable="true">Azərbaycan — Ana dili · İngilis — B2 · Rus — B1</p>
+  </div>
+</div>
+
+<script>
+  document.getElementById('photoInput').addEventListener('change',function(e){
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{document.getElementById('avatar').innerHTML='<img src="'+r.result+'">';};
+    r.readAsDataURL(f);
+  });
+</script>
+</body>
+</html>
