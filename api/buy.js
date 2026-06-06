@@ -16,27 +16,38 @@ module.exports = async (req, res) => {
     const { data: orders } = await supabase
       .from('orders').select('items,created_at,order_key')
       .like('order_key', `bal_${user.id}_%`).order('created_at', { ascending: false });
-    // Təkrarsız məhsul siyahısı (ən son alınma tarixi ilə)
+
+    // Hər alınmış (məhsul + variant) ayrıca göstərilir, ən son tarixlə.
+    // Açar: id + variant adı (variant yoxdursa sadəcə id)
     const seen = {};
     (orders || []).forEach((o) => {
       (o.items || []).forEach((it) => {
-        if (!seen[it.id]) seen[it.id] = { id: it.id, name: it.name, emoji: it.emoji, date: o.created_at };
+        const key = it.variant ? `${it.id}::${it.variant}` : it.id;
+        if (!seen[key]) seen[key] = {
+          id: it.id, name: it.name, emoji: it.emoji,
+          variant: it.variant || null, file_path: it.file_path || null, date: o.created_at,
+        };
       });
     });
-    const ids = Object.keys(seen);
+
+    const keys = Object.keys(seen);
     const owned = [];
-    if (ids.length) {
+    if (keys.length) {
+      // Köhnə sifarişlərdə file_path saxlanmaya bilər — products-dan fallback götür
+      const ids = [...new Set(keys.map((k) => seen[k].id))];
       const { data: products } = await supabase.from('products').select('id,file_path').in('id', ids);
       const fileMap = {};
       (products || []).forEach((p) => { fileMap[p.id] = p.file_path; });
-      ids.forEach((id) => {
-        const fp = fileMap[id];
+      keys.forEach((k) => {
+        const item = seen[k];
+        const fp = item.file_path || fileMap[item.id];
         let url = null;
         if (fp) {
           const t = makeToken('file:' + fp, SIGNED_URL_TTL * 1000);
           url = `/api/file?t=${encodeURIComponent(t)}`;
         }
-        owned.push({ ...seen[id], url });
+        const label = item.variant ? `${item.name} — ${item.variant}` : item.name;
+        owned.push({ id: item.id, name: label, emoji: item.emoji, date: item.date, url });
       });
     }
     return res.json({ owned });
@@ -74,12 +85,31 @@ module.exports = async (req, res) => {
 
     const { data: products } = await supabase.from('products').select('*').in('id', ids);
     if (!products || !products.length) return res.status(400).json({ error: 'Məhsul tapılmadı.' });
-    // Müddətli endirim aktivdirsə endirimli qiyməti götür
+
+    // ----- KAMPANİYA FAİZİ (qlobal, bütün məhsullara) -----
+    let campaignPercent = 0;
+    try {
+      const { data: setRows } = await supabase.from('app_settings').select('key,value')
+        .in('key', ['campaign_ends_at', 'campaign_percent']);
+      let cEnds = null, cPct = 0;
+      (setRows || []).forEach((r) => {
+        if (r.key === 'campaign_ends_at') cEnds = r.value;
+        if (r.key === 'campaign_percent') cPct = parseInt(r.value, 10) || 0;
+      });
+      if (cPct > 0 && cEnds && new Date(cEnds).getTime() > Date.now()) campaignPercent = cPct;
+    } catch (e) { /* app_settings yoxdursa kampaniya yox */ }
+
+    // Müddətli endirim + kampaniya: hansı daha ucuzdursa onu götür
     const now = Date.now();
     const priceOf = (p) => {
+      let price = p.price;
+      // məhsulun öz müddətli endirimi
       const saleActive = p.sale_price != null && p.sale_price < p.price &&
         (!p.sale_ends_at || new Date(p.sale_ends_at).getTime() > now);
-      return saleActive ? p.sale_price : p.price;
+      if (saleActive) price = Math.min(price, p.sale_price);
+      // qlobal kampaniya faizi
+      if (campaignPercent > 0) price = Math.min(price, Math.round(p.price * (100 - campaignPercent) / 100));
+      return price;
     };
     const subtotal = products.reduce((s, p) => s + priceOf(p), 0);
 
@@ -133,8 +163,33 @@ module.exports = async (req, res) => {
         .eq('code', appliedPromo.code);
     }
 
+    // ----- VARİANT SEÇİMİ: hər alışda növbəti variant (dövri) -----
+    // İstifadəçinin keçmiş alışlarını oxu ki, hər məhsulu neçə dəfə aldığını sayaq.
+    const { data: pastOrders } = await supabase
+      .from('orders').select('items').like('order_key', `bal_${user.id}_%`);
+    const buyCount = {}; // productId -> əvvəlki alış sayı
+    (pastOrders || []).forEach((o) => {
+      (o.items || []).forEach((it) => { buyCount[it.id] = (buyCount[it.id] || 0) + 1; });
+    });
+
+    // Hər məhsul üçün bu alışda veriləcək faylı/variantı təyin et
+    const chosen = {}; // productId -> {file_path, variantName}
+    products.forEach((p) => {
+      const variants = Array.isArray(p.variants) ? p.variants.filter((v) => v && v.file_path) : [];
+      if (variants.length > 0) {
+        const idx = (buyCount[p.id] || 0) % variants.length; // növbəti variant (dövri)
+        chosen[p.id] = { file_path: variants[idx].file_path, variantName: variants[idx].name || `Variant ${idx + 1}` };
+      } else {
+        chosen[p.id] = { file_path: p.file_path, variantName: null };
+      }
+    });
+
     const orderKey = `bal_${user.id}_${Date.now()}`;
-    const orderItems = products.map((p) => ({ id: p.id, name: p.name, price: priceOf(p), emoji: p.emoji }));
+    const orderItems = products.map((p) => ({
+      id: p.id, name: p.name, price: priceOf(p), emoji: p.emoji,
+      variant: chosen[p.id].variantName || undefined,
+      file_path: chosen[p.id].file_path || undefined,
+    }));
     await supabase.from('orders').upsert(
       { order_key: orderKey, items: orderItems, total },
       { onConflict: 'order_key', ignoreDuplicates: true }
@@ -142,9 +197,11 @@ module.exports = async (req, res) => {
 
     const downloads = [];
     for (const p of products) {
-      if (!p.file_path) continue;
-      const t = makeToken('file:' + p.file_path, SIGNED_URL_TTL * 1000);
-      downloads.push({ name: p.name, emoji: p.emoji, url: `/api/file?t=${encodeURIComponent(t)}` });
+      const fp = chosen[p.id].file_path;
+      if (!fp) continue;
+      const t = makeToken('file:' + fp, SIGNED_URL_TTL * 1000);
+      const label = chosen[p.id].variantName ? `${p.name} — ${chosen[p.id].variantName}` : p.name;
+      downloads.push({ name: label, emoji: p.emoji, url: `/api/file?t=${encodeURIComponent(t)}` });
     }
 
     res.json({

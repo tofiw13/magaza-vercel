@@ -57,3 +57,12 @@ alter table public.app_settings enable row level security;
 -- Hamı oxuya bilər (kampaniya tarixi public-dir)
 drop policy if exists "settings public read" on public.app_settings;
 create policy "settings public read" on public.app_settings for select using (true);
+
+
+-- 7) MƏHSUL VARİANTLARI: bir məhsulun içində bir neçə fayl
+--    Hər alışda növbəti variant verilir (dövri).
+--    Format: [{"name":"Variant 1","file_path":"fayl1.pdf"}, {"name":"Variant 2","file_path":"fayl2.pdf"}]
+alter table public.products add column if not exists variants jsonb default '[]'::jsonb;
+
+-- Kampaniya faizi app_settings-də saxlanılır (campaign_percent açarı).
+-- Ayrıca sütun lazım deyil — mövcud app_settings cədvəlindən istifadə olunur.

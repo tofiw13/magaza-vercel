@@ -136,7 +136,7 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
 
 <!-- GERİ SAYIM BANNER (kampaniya) -->
 <div class="countdown" id="countdown" style="display:none">
-  <span class="cd-label">🔥 Endirim kampaniyası bitir:</span>
+  <span class="cd-label" id="cdLabel">🔥 Endirim kampaniyası bitir:</span>
   <span class="cd-time">
     <span class="cd-box"><span id="cdH">00</span><small>saat</small></span>
     <span class="cd-box"><span id="cdM">00</span><small>dəqiqə</small></span>
@@ -285,6 +285,8 @@ function startCountdown(){
   if(!endStr){box.style.display='none';return;}
   const end=new Date(endStr);
   if(isNaN(end.getTime())){box.style.display='none';return;}
+  const pct=CFG&&CFG.campaignPercent;
+  if(pct)$('#cdLabel').textContent=`🔥 Bütün məhsullara ${pct}% endirim! Bitir:`;
   function tick(){
     const diff=end-new Date();
     if(diff<=0){box.style.display='none';clearInterval(cdTimer);return;}
@@ -340,8 +342,12 @@ function renderProducts(){
     const priceHtml=onSale
       ? `<span style="text-decoration:line-through;color:var(--muted);font-size:1rem;font-weight:400">${money(p.price)}</span> <span style="color:var(--accent)">${money(p.sale_price)}</span> <span>endirim</span>`
       : `${money(p.price)} <span>birdəfəlik</span>`;
+    const variantBadge=(p.variant_count>1)
+      ? `<div style="font-size:.76rem;color:var(--accent2);margin-bottom:10px">🎁 ${p.variant_count} fərqli variant — hər alışda yenisi!</div>`
+      : '';
     el.innerHTML=`<div class="ico">${iconFor(p)}</div><h3>${p.name}</h3><p>${p.description||''}</p>`+
       `<div class="rating"><span class="stars" data-pid="${p.id}">${starsHtml}</span><span class="rc">${rc?avg.toFixed(1)+' ('+rc+')':'Reytinq yoxdur'}</span></div>`+
+      variantBadge+
       `<div class="price">${priceHtml}</div>`+
       `<button class="btn btn-add ${inC?'in':''}">${inC?'✓ Səbətdə (çıxar)':'Səbətə at'}</button>`;
     el.querySelector('.btn-add').addEventListener('click',()=>{if(cart[p.id])delete cart[p.id];else cart[p.id]=1;renderProducts();updateCart();});

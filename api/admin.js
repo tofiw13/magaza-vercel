@@ -50,6 +50,7 @@ module.exports = async (req, res) => {
     if (req.method === 'POST') {
       const id = (b.id || '').trim() || 'mehsul-' + Date.now();
       const product = { id, name: (b.name || 'Adsız').trim(), description: (b.description || '').trim(), price: Math.max(0, Math.round(Number(b.price) || 0)), currency: (b.currency || 'usd').trim(), emoji: (b.emoji || '📦').trim(), file_path: (b.file_path || '').trim() };
+      if (Array.isArray(b.variants)) product.variants = b.variants;
       const { error } = await supabase.from('products').insert(product);
       if (error) return res.status(400).json({ error: error.message });
       return res.json({ ok: true, product });
@@ -59,6 +60,12 @@ module.exports = async (req, res) => {
       const patch = {};
       ['name', 'description', 'emoji', 'file_path'].forEach((k) => { if (b[k] !== undefined) patch[k] = String(b[k]).trim(); });
       if (b.price !== undefined) patch.price = Math.max(0, Math.round(Number(b.price) || 0));
+      // Variantlar: yalnız etibarlı massiv gələrsə yenilə
+      if (Array.isArray(b.variants)) {
+        patch.variants = b.variants
+          .filter((v) => v && (v.name || v.file_path))
+          .map((v) => ({ name: String(v.name || '').trim(), file_path: String(v.file_path || '').trim() }));
+      }
       const { error } = await supabase.from('products').update(patch).eq('id', b.id);
       if (error) return res.status(400).json({ error: error.message });
       return res.json({ ok: true });
@@ -189,14 +196,15 @@ module.exports = async (req, res) => {
       return res.json(map);
     }
     if (req.method === 'POST') {
-      // body: { campaign_ends_at: '2026-06-10T23:59' }  və ya boş = sil
+      // body: { campaign_ends_at: '2026-06-10T23:59', campaign_percent: 20 }  (boş = sil/söndür)
       const val = b.campaign_ends_at ? new Date(b.campaign_ends_at).toISOString() : null;
-      const { error } = await supabase.from('app_settings').upsert(
-        { key: 'campaign_ends_at', value: val },
-        { onConflict: 'key' }
-      );
-      if (error) return res.status(400).json({ error: error.message });
-      return res.json({ ok: true, campaign_ends_at: val });
+      const pct = Math.max(0, Math.min(90, Math.round(Number(b.campaign_percent) || 0)));
+      const e1 = await supabase.from('app_settings').upsert(
+        { key: 'campaign_ends_at', value: val }, { onConflict: 'key' });
+      const e2 = await supabase.from('app_settings').upsert(
+        { key: 'campaign_percent', value: String(pct) }, { onConflict: 'key' });
+      if (e1.error || e2.error) return res.status(400).json({ error: (e1.error || e2.error).message });
+      return res.json({ ok: true, campaign_ends_at: val, campaign_percent: pct });
     }
     return res.status(405).json({ error: 'Metod dəstəklənmir.' });
   }
