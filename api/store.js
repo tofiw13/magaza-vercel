@@ -1,10 +1,15 @@
 // Birləşdirilmiş mağaza API (Vercel Hobby 12 funksiya limiti üçün)
-// ?action=promo | wishlist | ratings | flash-sales | chat
+// ?action=promo | wishlist | ratings | flash-sales | chat | config | health | order
 const { supabase } = require('../lib/supabase');
 const { getUser } = require('../lib/user');
+const { verifyToken, makeToken } = require('../lib/auth');
+const crypto = require('crypto');
 
 const TG = process.env.TELEGRAM_BOT_TOKEN;
 const ADMIN_CHAT = process.env.TELEGRAM_CHAT_ID;
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripe = stripeKey ? require('stripe')(stripeKey) : null;
+const FILE_TTL = 3600;
 
 async function tg(method, body) {
   if (!TG) return null;
@@ -41,6 +46,53 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const action = req.query.action || '';
+
+  // ========== CONFIG (frontend açıq konfiqurasiya) ==========
+  if (action === 'config') {
+    return res.json({
+      supabaseUrl: process.env.SUPABASE_URL || '',
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+      paymentInfo: process.env.PAYMENT_INFO || 'Kapital Bank · 4169 7388 0083 1020 · Tofig N***',
+    });
+  }
+
+  // ========== HEALTH ==========
+  if (action === 'health') {
+    return res.json({ ok: true, demo: !process.env.STRIPE_SECRET_KEY });
+  }
+
+  // ========== ORDER (success səhifəsi üçün) ==========
+  if (action === 'order') {
+    const { session_id, order } = req.query;
+    let ids = [], orderKey = '';
+    if (order) {
+      const payload = verifyToken(order);
+      if (payload === null) return res.status(403).json({ error: 'Sifariş etibarsızdır və ya vaxtı bitib.' });
+      ids = payload ? payload.split('|') : [];
+      orderKey = 'demo_' + crypto.createHash('sha1').update(order).digest('hex').slice(0, 16);
+    } else if (session_id) {
+      if (!stripe) return res.status(400).json({ error: 'Stripe konfiqurasiya olunmayıb.' });
+      try {
+        const s = await stripe.checkout.sessions.retrieve(session_id);
+        if (s.payment_status !== 'paid') return res.status(402).json({ error: 'Ödəniş tamamlanmayıb.' });
+        ids = (s.metadata?.product_ids || '').split(',').filter(Boolean);
+        orderKey = session_id;
+      } catch (e) { return res.status(404).json({ error: 'Sifariş tapılmadı.' }); }
+    } else return res.status(400).json({ error: 'session_id və ya order lazımdır.' });
+
+    const { data: products } = await supabase.from('products').select('*').in('id', ids);
+    const items = (products || []).map((p) => ({ id: p.id, name: p.name, price: p.price, emoji: p.emoji }));
+    const total = items.reduce((s, p) => s + p.price, 0);
+    await supabase.from('orders').upsert({ order_key: orderKey, items, total }, { onConflict: 'order_key', ignoreDuplicates: true });
+    const downloads = [];
+    for (const id of ids) {
+      const p = (products || []).find((x) => x.id === id);
+      if (!p || !p.file_path) continue;
+      const t = makeToken('file:' + p.file_path, FILE_TTL * 1000);
+      downloads.push({ name: p.name, emoji: p.emoji, url: `/api/file?t=${encodeURIComponent(t)}` });
+    }
+    return res.json({ downloads });
+  }
 
   // ========== PROMO ==========
   if (action === 'promo') {

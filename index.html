@@ -204,7 +204,7 @@ function toast(text,type){const t=$('#toast');t.textContent=text;t.className='to
 
 async function init(){
   $('#year').textContent=new Date().getFullYear();
-  CFG=await fetch('/api/config').then(r=>r.json()).catch(()=>({}));
+  CFG=await fetch('/api/store?action=config').then(r=>r.json()).catch(()=>({}));
   $('#payInfo').textContent=CFG.paymentInfo||'';
   if(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase){
     sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);
@@ -724,7 +724,7 @@ $('#searchInput').oninput=(e)=>{
 async function init(){
   initTheme();
   $('#year').textContent=new Date().getFullYear();
-  CFG=await fetch('/api/config').then(r=>r.json()).catch(()=>({}));
+  CFG=await fetch('/api/store?action=config').then(r=>r.json()).catch(()=>({}));
   $('#payInfo').textContent=CFG.paymentInfo||'';
   
   if(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase){
