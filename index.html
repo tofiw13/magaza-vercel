@@ -135,8 +135,6 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
   <label>Parol</label><input id="authPass" type="password" placeholder="••••••••">
   <div id="pass2Row" style="display:none"><label>Parolu təsdiqlə</label><input id="authPass2" type="password" placeholder="••••••••"></div>
   <button class="btn green" style="width:100%;margin-top:14px" id="authSubmit">Davam et</button>
-  <div class="divider">və ya</div>
-  <button class="btn ghost" style="width:100%" id="googleBtn">🔵 Google ilə davam et</button>
   <div class="msg" id="authMsg"></div>
 </div></div>
 
@@ -293,7 +291,6 @@ $('#authSubmit').onclick=async()=>{
   if(authMode==='signup'&&!r.data.session){$('#authMsg').textContent='Email-ə təsdiq linki göndərildi. Təsdiqlə və daxil ol.';$('#authMsg').className='msg ok';return;}
   session=r.data.session;$('#authOverlay').classList.remove('show');refreshUser();
 };
-$('#googleBtn').onclick=async()=>{if(!sb){$('#authMsg').textContent='Google girişi üçün konfiqurasiya lazımdır.';$('#authMsg').className='msg err';return;}const r=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin}});if(r.error){$('#authMsg').textContent='Google girişi aktiv deyil: '+r.error.message;$('#authMsg').className='msg err';}};
 
 // TARİXÇƏ — balans artırma + alınan məhsullar
 async function openHistory(){
