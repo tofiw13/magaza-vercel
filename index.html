@@ -2,8 +2,12 @@
 <html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OnlineBələdçi</title><style>
 :root{--bg:#0b1120;--card:#161f33;--card2:#1f2a44;--accent:#22c55e;--accent2:#6366f1;--text:#e8edf6;--muted:#94a3b8;--border:#2a3650;--danger:#ef4444}
+:root[data-theme="light"]{--bg:#f1f5f9;--card:#ffffff;--card2:#eef2f7;--accent:#16a34a;--accent2:#4f46e5;--text:#0f172a;--muted:#64748b;--border:#dbe3ee;--danger:#dc2626}
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
-body{background:var(--bg);color:var(--text);line-height:1.55;padding-bottom:120px}
+body{background:var(--bg);color:var(--text);line-height:1.55;padding-bottom:120px;transition:background .25s,color .25s}
+/* Tema düyməsi */
+.theme-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);cursor:pointer;font-size:1.1rem;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.theme-btn:hover{border-color:var(--accent2)}
 .topnav{position:sticky;top:0;z-index:40;background:rgba(11,17,32,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:12px 20px;gap:12px;flex-wrap:wrap}
 .topnav .brand{font-weight:700;font-size:1.05rem}
 .topnav .right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -68,6 +72,23 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
 .tag.approved{background:rgba(34,197,94,.18);color:var(--accent)}
 .tag.rejected{background:rgba(239,68,68,.18);color:#f87171}
 .hist-date{color:var(--muted);font-size:.76rem}
+/* Ulduzlu reytinq */
+.rating{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.stars{display:inline-flex;gap:2px;font-size:1.1rem;line-height:1}
+.stars .s{cursor:pointer;color:var(--border);transition:transform .1s}
+.stars .s.on{color:#fbbf24}
+.stars .s:hover{transform:scale(1.18)}
+.rating .rc{font-size:.78rem;color:var(--muted)}
+/* Geri sayım banner */
+.countdown{margin:18px auto 0;max-width:1000px;background:linear-gradient(135deg,rgba(239,68,68,.18),rgba(99,102,241,.14));border:1px solid var(--border);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;text-align:center}
+.countdown .cd-label{font-weight:700}
+.countdown .cd-time{display:inline-flex;gap:6px}
+.cd-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 9px;min-width:42px;font-weight:800;font-size:1.1rem}
+.cd-box small{display:block;font-size:.6rem;color:var(--muted);font-weight:600}
+/* Xal sətri (checkout modal) */
+.points-row{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:.86rem}
+.points-row input[type=checkbox]{width:auto}
+.points-pill{background:linear-gradient(135deg,rgba(251,191,36,.2),rgba(251,191,36,.06));border:1px solid rgba(251,191,36,.4);color:#fbbf24;font-weight:700;padding:5px 11px;border-radius:20px;font-size:.85rem}
 /* Toast bildiriş (aşağı orta) */
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);z-index:90;padding:14px 24px;border-radius:12px;font-weight:700;font-size:.95rem;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 10px 30px rgba(0,0,0,.4);text-align:center;max-width:90vw}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -105,12 +126,23 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
 <div class="topnav">
   <div class="brand">🛍️ OnlineBələdçi</div>
   <div class="right" id="navRight">
+    <button class="theme-btn" id="themeBtn" title="Tema dəyiş">🌙</button>
     <button class="btn ghost sm" id="loginBtn">Daxil ol</button>
     <button class="btn sm" id="signupBtn">Qeydiyyat</button>
   </div>
 </div>
 
 <header><h1>Hazır şablonlar və e-kitablar</h1><p>Balansını artır, məhsulu seç, dərhal yüklə.</p></header>
+
+<!-- GERİ SAYIM BANNER (kampaniya) -->
+<div class="countdown" id="countdown" style="display:none">
+  <span class="cd-label">🔥 Endirim kampaniyası bitir:</span>
+  <span class="cd-time">
+    <span class="cd-box"><span id="cdH">00</span><small>saat</small></span>
+    <span class="cd-box"><span id="cdM">00</span><small>dəqiqə</small></span>
+    <span class="cd-box"><span id="cdS">00</span><small>saniyə</small></span>
+  </span>
+</div>
 
 <div class="wrap">
   <div class="grid" id="grid">Yüklənir...</div>
@@ -125,6 +157,31 @@ footer .ig:hover{text-decoration:none}footer .ig:hover span{text-decoration:unde
 
 <div class="cartbar"><div><span id="cartCount">0</span> məhsul səbətdə</div><div class="total" id="cartTotal">0.00 ₼</div>
 <button class="checkout" id="checkoutBtn" disabled>Al (balansla)</button></div>
+
+<!-- SƏBƏT / ÖDƏNİŞ MODAL -->
+<div class="overlay" id="payOverlay"><div class="modal">
+  <span class="x" data-close>&times;</span>
+  <h2>🛒 Səbət</h2>
+  <div id="payItems" style="font-size:.88rem;color:var(--muted);margin-bottom:8px"></div>
+  <label>Promo kod</label>
+  <div style="display:flex;gap:8px">
+    <input id="promoInput" type="text" placeholder="məs: SALAM10" style="text-transform:uppercase">
+    <button class="btn sm" id="promoBtn" style="white-space:nowrap">Tətbiq et</button>
+  </div>
+  <div class="msg" id="promoMsg"></div>
+  <div class="points-row" id="pointsRow" style="display:none">
+    <input type="checkbox" id="usePointsChk">
+    <label for="usePointsChk" style="margin:0;color:var(--text);cursor:pointer">Xallarımı işlət (<span id="availPoints">0</span> xal = <span id="availPointsM">0.00 ₼</span>)</label>
+  </div>
+  <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;font-size:.9rem">
+    <div style="display:flex;justify-content:space-between"><span>Cəm:</span><span id="sumSubtotal">0.00 ₼</span></div>
+    <div style="display:flex;justify-content:space-between;color:var(--accent)" id="sumDiscountRow"><span>Promo endirimi:</span><span id="sumDiscount">0.00 ₼</span></div>
+    <div style="display:flex;justify-content:space-between;color:#fbbf24" id="sumPointsRow"><span>Xal endirimi:</span><span id="sumPoints">0.00 ₼</span></div>
+    <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.1rem;margin-top:6px"><span>Ödəniləcək:</span><span id="sumTotal">0.00 ₼</span></div>
+  </div>
+  <button class="btn green" style="width:100%;margin-top:14px" id="payConfirmBtn">Təsdiqlə və al</button>
+  <div class="msg" id="payMsg"></div>
+</div></div>
 
 <!-- AUTH MODAL -->
 <div class="overlay" id="authOverlay"><div class="modal">
@@ -193,6 +250,22 @@ const $=s=>document.querySelector(s);const money=c=>(c/100).toFixed(2)+' ₼';
 let PRODUCTS=[],cart={},sb=null,session=null,CFG={};
 let topupStatuses={};   // id -> status (dəyişikliyi izləmək üçün)
 let pollTimer=null;
+let myPoints=0;          // istifadəçinin xal balansı
+let appliedPromo=null;   // {code, discount_percent}
+let cdTimer=null;        // geri sayım timer
+
+// ===== TEMA (dark/light) =====
+function applyTheme(t){
+  if(t==='light')document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  const btn=$('#themeBtn');if(btn)btn.textContent=t==='light'?'☀️':'🌙';
+}
+function toggleTheme(){
+  const cur=localStorage.getItem('theme')==='light'?'light':'dark';
+  const next=cur==='light'?'dark':'light';
+  localStorage.setItem('theme',next);applyTheme(next);
+}
+applyTheme(localStorage.getItem('theme')==='light'?'light':'dark');
 
 // Professional ikonlar (id-yə görə)
 const ICONS={'cv-template':'🪪','study-schedule':'📅','budget-sheet':'📊','instagram-pack':'📸','ebook-freelance':'📚'};
@@ -200,8 +273,39 @@ function iconFor(p){return ICONS[p.id]||p.emoji||'📦';}
 
 function toast(text,type){const t=$('#toast');t.textContent=text;t.className='toast '+(type==='red'?'red':'green')+' show';setTimeout(()=>t.classList.remove('show'),4000);}
 
+// ===== GERİ SAYIM TAYMERİ =====
+// Kampaniya bitmə anı: hər həftənin bazar günü 23:59 (lokal). Keçibsə növbəti həftəyə.
+function getCampaignEnd(){
+  const saved=localStorage.getItem('campaignEnd');
+  if(saved){const d=new Date(saved);if(d>new Date())return d;}
+  const now=new Date();
+  const end=new Date(now);
+  const daysToSun=(7-now.getDay())%7; // 0=bazar
+  end.setDate(now.getDate()+(daysToSun===0?7:daysToSun));
+  end.setHours(23,59,59,0);
+  localStorage.setItem('campaignEnd',end.toISOString());
+  return end;
+}
+function startCountdown(){
+  const end=getCampaignEnd();
+  const box=$('#countdown');
+  if(cdTimer)clearInterval(cdTimer);
+  function tick(){
+    const diff=end-new Date();
+    if(diff<=0){box.style.display='none';clearInterval(cdTimer);localStorage.removeItem('campaignEnd');return;}
+    const h=Math.floor(diff/3.6e6),m=Math.floor(diff%3.6e6/6e4),s=Math.floor(diff%6e4/1e3);
+    $('#cdH').textContent=String(h).padStart(2,'0');
+    $('#cdM').textContent=String(m).padStart(2,'0');
+    $('#cdS').textContent=String(s).padStart(2,'0');
+    box.style.display='flex';
+  }
+  tick();cdTimer=setInterval(tick,1000);
+}
+
 async function init(){
   $('#year').textContent=new Date().getFullYear();
+  const tb=$('#themeBtn');if(tb)tb.onclick=toggleTheme;
+  startCountdown();
   CFG=await fetch('/api/config').then(r=>r.json()).catch(()=>({}));
   $('#payInfo').textContent=CFG.paymentInfo||'';
   if(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase){
@@ -227,21 +331,45 @@ async function loadProducts(){
 function renderProducts(){
   $('#grid').innerHTML='';
   PRODUCTS.forEach(p=>{const inC=cart[p.id]>0;const el=document.createElement('div');el.className='prod';
-    el.innerHTML=`<div class="ico">${iconFor(p)}</div><h3>${p.name}</h3><p>${p.description||''}</p><div class="price">${money(p.price)} <span>birdəfəlik</span></div><button class="btn btn-add ${inC?'in':''}">${inC?'✓ Səbətdə (çıxar)':'Səbətə at'}</button>`;
-    el.querySelector('button').addEventListener('click',()=>{if(cart[p.id])delete cart[p.id];else cart[p.id]=1;renderProducts();updateCart();});
+    const avg=p.rating_avg||0;const rc=p.rating_count||0;
+    let starsHtml='';
+    for(let i=1;i<=5;i++){starsHtml+=`<span class="s ${i<=Math.round(avg)?'on':''}" data-star="${i}">★</span>`;}
+    el.innerHTML=`<div class="ico">${iconFor(p)}</div><h3>${p.name}</h3><p>${p.description||''}</p>`+
+      `<div class="rating"><span class="stars" data-pid="${p.id}">${starsHtml}</span><span class="rc">${rc?avg.toFixed(1)+' ('+rc+')':'Reytinq yoxdur'}</span></div>`+
+      `<div class="price">${money(p.price)} <span>birdəfəlik</span></div>`+
+      `<button class="btn btn-add ${inC?'in':''}">${inC?'✓ Səbətdə (çıxar)':'Səbətə at'}</button>`;
+    el.querySelector('.btn-add').addEventListener('click',()=>{if(cart[p.id])delete cart[p.id];else cart[p.id]=1;renderProducts();updateCart();});
+    // Ulduza klik → reytinq ver
+    el.querySelectorAll('.stars .s').forEach(st=>{st.addEventListener('click',()=>rateProduct(p.id,parseInt(st.dataset.star,10)));});
     $('#grid').appendChild(el);});
+}
+
+// Reytinq ver
+async function rateProduct(productId,stars){
+  if(!session){toast('Reytinq vermək üçün daxil ol.','red');openAuth('login');return;}
+  try{
+    const r=await fetch('/api/store',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({action:'rate',product_id:productId,stars})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Xəta');
+    const p=PRODUCTS.find(x=>x.id===productId);if(p){p.rating_avg=Math.round(d.average*10)/10;p.rating_count=d.count;}
+    renderProducts();toast('Təşəkkürlər! '+stars+' ulduz verdin ⭐','green');
+  }catch(e){toast('Reytinq göndərilmədi: '+e.message,'red');}
 }
 function updateCart(){const ids=Object.keys(cart);const total=ids.reduce((s,id)=>{const p=PRODUCTS.find(x=>x.id===id);return s+(p?p.price:0);},0);$('#cartCount').textContent=ids.length;$('#cartTotal').textContent=money(total);$('#checkoutBtn').disabled=ids.length===0;}
 
 async function refreshUser(){
   const nav=$('#navRight');
-  if(!session){nav.innerHTML='<button class="btn ghost sm" id="loginBtn">Daxil ol</button><button class="btn sm" id="signupBtn">Qeydiyyat</button>';
+  if(!session){nav.innerHTML='<button class="theme-btn" id="themeBtn" title="Tema dəyiş">🌙</button><button class="btn ghost sm" id="loginBtn">Daxil ol</button><button class="btn sm" id="signupBtn">Qeydiyyat</button>';
+    $('#themeBtn').onclick=toggleTheme;applyTheme(localStorage.getItem('theme')==='light'?'light':'dark');
     $('#loginBtn').onclick=()=>openAuth('login');$('#signupBtn').onclick=()=>openAuth('signup');
+    myPoints=0;
     if(pollTimer){clearInterval(pollTimer);pollTimer=null;}return;}
   let bal=0;
-  try{const {data}=await sb.from('profiles').select('balance').eq('id',session.user.id).single();bal=data?.balance||0;}catch(e){}
+  try{const {data}=await sb.from('profiles').select('balance,points').eq('id',session.user.id).single();bal=data?.balance||0;myPoints=data?.points||0;}catch(e){}
   const initial=(session.user.email||'?').charAt(0);
-  nav.innerHTML=`<span class="bal">💰 ${money(bal)} <button class="bal-add" id="balAddBtn" title="Balans artır">+</button></span>`+
+  nav.innerHTML=`<button class="theme-btn" id="themeBtn" title="Tema dəyiş">🌙</button>`+
+    `<span class="points-pill" title="Sadiqlik xalları">⭐ ${myPoints}</span>`+
+    `<span class="bal">💰 ${money(bal)} <button class="bal-add" id="balAddBtn" title="Balans artır">+</button></span>`+
     `<div class="avatar-circle" title="${session.user.email||''}">${initial}</div>`+
     `<div class="menu-wrap"><button class="menu-btn" id="menuBtn" title="Menyu"><span></span><span></span><span></span></button>`+
     `<div class="menu-drop" id="menuDrop">`+
@@ -251,6 +379,7 @@ async function refreshUser(){
       `<div class="sep"></div>`+
       `<button id="logoutBtn" class="danger">🚪 Çıxış</button>`+
     `</div></div>`;
+  $('#themeBtn').onclick=toggleTheme;applyTheme(localStorage.getItem('theme')==='light'?'light':'dark');
   $('#balAddBtn').onclick=()=>$('#topupOverlay').classList.add('show');
   const drop=$('#menuDrop');
   $('#menuBtn').onclick=(e)=>{e.stopPropagation();drop.classList.toggle('show');};
@@ -371,20 +500,77 @@ $('#topSubmit').onclick=async()=>{
   }catch(e){$('#topMsg').textContent='Xəta: '+e.message;$('#topMsg').className='msg err';}
 };
 
-// BUY (balansla)
-$('#checkoutBtn').onclick=async()=>{
+// AL düyməsi → ödəniş modalını aç (promo + xal seçimi ilə)
+$('#checkoutBtn').onclick=()=>{
   if(!session){openAuth('login');return;}
+  if(!Object.keys(cart).length)return;
+  openPayModal();
+};
+
+function cartSubtotal(){return Object.keys(cart).reduce((s,id)=>{const p=PRODUCTS.find(x=>x.id===id);return s+(p?p.price:0);},0);}
+
+function openPayModal(){
+  appliedPromo=null;
+  $('#promoInput').value='';$('#promoMsg').textContent='';
+  $('#usePointsChk').checked=false;
+  // Səbət siyahısı
+  $('#payItems').innerHTML=Object.keys(cart).map(id=>{const p=PRODUCTS.find(x=>x.id===id);return p?`${iconFor(p)} ${p.name} — ${money(p.price)}`:'';}).join('<br>');
+  // Xal sətri
+  if(myPoints>0){$('#pointsRow').style.display='flex';$('#availPoints').textContent=myPoints;$('#availPointsM').textContent=money(myPoints);}
+  else $('#pointsRow').style.display='none';
+  recalcPay();
+  $('#payOverlay').classList.add('show');
+}
+
+function recalcPay(){
+  const subtotal=cartSubtotal();
+  let discount=0;
+  if(appliedPromo)discount=Math.floor(subtotal*appliedPromo.discount_percent/100);
+  const afterPromo=Math.max(0,subtotal-discount);
+  let pointsM=0;
+  if($('#usePointsChk').checked)pointsM=Math.min(myPoints,afterPromo);
+  const total=Math.max(0,afterPromo-pointsM);
+  $('#sumSubtotal').textContent=money(subtotal);
+  $('#sumDiscount').textContent='-'+money(discount);
+  $('#sumDiscountRow').style.display=discount?'flex':'none';
+  $('#sumPoints').textContent='-'+money(pointsM);
+  $('#sumPointsRow').style.display=pointsM?'flex':'none';
+  $('#sumTotal').textContent=money(total);
+}
+$('#usePointsChk') && ($('#usePointsChk').onchange=recalcPay);
+
+// Promo tətbiq et
+$('#promoBtn').onclick=async()=>{
+  const code=$('#promoInput').value.trim().toUpperCase();
+  if(!code){$('#promoMsg').textContent='Kod daxil et.';$('#promoMsg').className='msg err';return;}
+  $('#promoMsg').textContent='Yoxlanılır...';$('#promoMsg').className='msg';
+  try{
+    const r=await fetch('/api/store?action=promo&code='+encodeURIComponent(code));
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Kod yanlışdır');
+    appliedPromo=d;
+    $('#promoMsg').textContent='✓ '+d.discount_percent+'% endirim tətbiq olundu!';$('#promoMsg').className='msg ok';
+    recalcPay();
+  }catch(e){appliedPromo=null;$('#promoMsg').textContent=e.message;$('#promoMsg').className='msg err';recalcPay();}
+};
+
+// Təsdiqlə və al
+$('#payConfirmBtn').onclick=async()=>{
   const items=Object.keys(cart).map(id=>({id}));if(!items.length)return;
-  $('#checkoutBtn').disabled=true;$('#checkoutBtn').textContent='Alınır...';
-  const r=await fetch('/api/buy',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({items})});
+  const usePoints=$('#usePointsChk').checked?myPoints:0;
+  $('#payConfirmBtn').disabled=true;$('#payConfirmBtn').textContent='Alınır...';
+  const r=await fetch('/api/buy',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({items,promo_code:appliedPromo?appliedPromo.code:'',use_points:usePoints})});
   const d=await r.json();
-  $('#checkoutBtn').textContent='Al (balansla)';$('#checkoutBtn').disabled=false;
-  if(r.status===402){toast('Balans kifayət etmir. Balansını artır.','red');$('#topupOverlay').classList.add('show');return;}
-  if(!r.ok){toast('Xəta: '+(d.error||''),'red');return;}
+  $('#payConfirmBtn').textContent='Təsdiqlə və al';$('#payConfirmBtn').disabled=false;
+  if(r.status===402){$('#payMsg').textContent='Balans kifayət etmir. Balansını artır.';$('#payMsg').className='msg err';$('#payOverlay').classList.remove('show');$('#topupOverlay').classList.add('show');return;}
+  if(!r.ok){$('#payMsg').textContent='Xəta: '+(d.error||'');$('#payMsg').className='msg err';return;}
+  $('#payOverlay').classList.remove('show');
   cart={};renderProducts();updateCart();refreshUser();
   $('#dlList').innerHTML=(d.downloads||[]).map(x=>`<a href="${x.url}" target="_blank">${iconFor(x)||'📦'} ${x.name} ↓</a>`).join('')||'<p>Yükləmə yoxdur.</p>';
   $('#dlOverlay').classList.add('show');
-  toast('✅ Alış uğurlu!','green');
+  let msg='✅ Alış uğurlu!';
+  if(d.earnedPoints)msg+=' +'+d.earnedPoints+' xal qazandın ⭐';
+  toast(msg,'green');
 };
 
 document.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>x.closest('.overlay').classList.remove('show'));

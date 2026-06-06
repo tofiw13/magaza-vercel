@@ -74,14 +74,57 @@ module.exports = async (req, res) => {
 
     const { data: products } = await supabase.from('products').select('*').in('id', ids);
     if (!products || !products.length) return res.status(400).json({ error: 'Məhsul tapılmadı.' });
-    const total = products.reduce((s, p) => s + p.price, 0);
+    const subtotal = products.reduce((s, p) => s + p.price, 0);
 
-    const { data: profile } = await supabase.from('profiles').select('balance').eq('id', user.id).single();
+    // ----- PROMO KOD (varsa) -----
+    const promoCodeRaw = (req.body?.promo_code || '').toString().trim().toUpperCase();
+    let discount = 0;            // sent ilə endirim
+    let appliedPromo = null;     // tətbiq olunan kod
+    if (promoCodeRaw) {
+      const { data: promo } = await supabase
+        .from('promo_codes').select('*').eq('code', promoCodeRaw).maybeSingle();
+      const valid = promo && promo.active
+        && (!promo.expires_at || new Date(promo.expires_at) >= new Date())
+        && (promo.max_uses == null || promo.used_count < promo.max_uses);
+      if (valid) {
+        discount = Math.floor(subtotal * promo.discount_percent / 100);
+        appliedPromo = promo;
+      }
+    }
+
+    // ----- XAL İSTİFADƏSİ (varsa) -----
+    // use_points: istifadəçinin istifadə etmək istədiyi xal sayı (1 xal = 1 qəpik)
+    const { data: profile } = await supabase
+      .from('profiles').select('balance,points').eq('id', user.id).single();
     const balance = profile?.balance || 0;
+    const availablePoints = profile?.points || 0;
+
+    const afterPromo = Math.max(0, subtotal - discount);
+    let pointsUsed = parseInt(req.body?.use_points, 10) || 0;
+    if (pointsUsed < 0) pointsUsed = 0;
+    // Xal nə mövcud xaldan, nə də qiymətdən çox ola bilməz
+    pointsUsed = Math.min(pointsUsed, availablePoints, afterPromo);
+
+    const total = Math.max(0, afterPromo - pointsUsed);
+
     if (balance < total) return res.status(402).json({ error: 'Balans kifayət etmir.', need: total, balance });
 
-    const upd = await supabase.from('profiles').update({ balance: balance - total }).eq('id', user.id);
+    // ----- XAL QAZAN (5% cashback, son ödənilən məbləğdən) -----
+    const earnedPoints = Math.floor(total * 0.05);
+
+    // ----- profiles yenilə: balans çıx, xal (istifadə olunan çıx + qazanılan əlavə) -----
+    const newBalance = balance - total;
+    const newPoints = availablePoints - pointsUsed + earnedPoints;
+    const upd = await supabase.from('profiles')
+      .update({ balance: newBalance, points: newPoints }).eq('id', user.id);
     if (upd.error) return res.status(500).json({ error: upd.error.message });
+
+    // ----- promo istifadə sayını artır -----
+    if (appliedPromo) {
+      await supabase.from('promo_codes')
+        .update({ used_count: (appliedPromo.used_count || 0) + 1 })
+        .eq('code', appliedPromo.code);
+    }
 
     const orderKey = `bal_${user.id}_${Date.now()}`;
     const orderItems = products.map((p) => ({ id: p.id, name: p.name, price: p.price, emoji: p.emoji }));
@@ -97,7 +140,16 @@ module.exports = async (req, res) => {
       downloads.push({ name: p.name, emoji: p.emoji, url: `/api/file?t=${encodeURIComponent(t)}` });
     }
 
-    res.json({ ok: true, newBalance: balance - total, downloads });
+    res.json({
+      ok: true,
+      newBalance,
+      downloads,
+      discount,                       // tətbiq olunan promo endirimi (sent)
+      pointsUsed,                     // istifadə olunan xal
+      earnedPoints,                   // qazanılan xal
+      newPoints,                      // yekun xal balansı
+      promoApplied: appliedPromo ? appliedPromo.code : null,
+    });
   } catch (e) {
     console.error('buy error:', e.message);
     res.status(500).json({ error: e.message });
