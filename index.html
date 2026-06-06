@@ -273,6 +273,9 @@ function iconFor(p){return ICONS[p.id]||p.emoji||'📦';}
 
 function toast(text,type){const t=$('#toast');t.textContent=text;t.className='toast '+(type==='red'?'red':'green')+' show';setTimeout(()=>t.classList.remove('show'),4000);}
 
+// Menyu xaricinə klik → bağla (təkrar listener-i önləmək üçün named funksiya)
+function closeMenuOutside(e){const drop=$('#menuDrop');if(drop && !e.target.closest('.menu-wrap'))drop.classList.remove('show');}
+
 // ===== GERİ SAYIM TAYMERİ =====
 // Bitmə anı admin paneldən təyin olunur (CFG.campaignEndsAt). Yoxdursa taymer gizli.
 function startCountdown(){
@@ -322,15 +325,24 @@ async function loadProducts(){
   try{PRODUCTS=await fetch('/api/products').then(r=>r.json());renderProducts();}
   catch(e){$('#grid').innerHTML='<p style="color:#f87171">Məhsullar yüklənmədi.</p>';}
 }
+// Məhsulun effektiv qiyməti (müddətli endirim aktivdirsə endirimli)
+function priceOf(p){
+  if(p && p.sale_price!=null && p.sale_price<p.price)return p.sale_price;
+  return p?p.price:0;
+}
 function renderProducts(){
   $('#grid').innerHTML='';
   PRODUCTS.forEach(p=>{const inC=cart[p.id]>0;const el=document.createElement('div');el.className='prod';
     const avg=p.rating_avg||0;const rc=p.rating_count||0;
     let starsHtml='';
     for(let i=1;i<=5;i++){starsHtml+=`<span class="s ${i<=Math.round(avg)?'on':''}" data-star="${i}">★</span>`;}
+    const onSale=p.sale_price!=null && p.sale_price<p.price;
+    const priceHtml=onSale
+      ? `<span style="text-decoration:line-through;color:var(--muted);font-size:1rem;font-weight:400">${money(p.price)}</span> <span style="color:var(--accent)">${money(p.sale_price)}</span> <span>endirim</span>`
+      : `${money(p.price)} <span>birdəfəlik</span>`;
     el.innerHTML=`<div class="ico">${iconFor(p)}</div><h3>${p.name}</h3><p>${p.description||''}</p>`+
       `<div class="rating"><span class="stars" data-pid="${p.id}">${starsHtml}</span><span class="rc">${rc?avg.toFixed(1)+' ('+rc+')':'Reytinq yoxdur'}</span></div>`+
-      `<div class="price">${money(p.price)} <span>birdəfəlik</span></div>`+
+      `<div class="price">${priceHtml}</div>`+
       `<button class="btn btn-add ${inC?'in':''}">${inC?'✓ Səbətdə (çıxar)':'Səbətə at'}</button>`;
     el.querySelector('.btn-add').addEventListener('click',()=>{if(cart[p.id])delete cart[p.id];else cart[p.id]=1;renderProducts();updateCart();});
     // Ulduza klik → reytinq ver
@@ -349,7 +361,7 @@ async function rateProduct(productId,stars){
     renderProducts();toast('Təşəkkürlər! '+stars+' ulduz verdin ⭐','green');
   }catch(e){toast('Reytinq göndərilmədi: '+e.message,'red');}
 }
-function updateCart(){const ids=Object.keys(cart);const total=ids.reduce((s,id)=>{const p=PRODUCTS.find(x=>x.id===id);return s+(p?p.price:0);},0);$('#cartCount').textContent=ids.length;$('#cartTotal').textContent=money(total);$('#checkoutBtn').disabled=ids.length===0;}
+function updateCart(){const ids=Object.keys(cart);const total=ids.reduce((s,id)=>{const p=PRODUCTS.find(x=>x.id===id);return s+priceOf(p);},0);$('#cartCount').textContent=ids.length;$('#cartTotal').textContent=money(total);$('#checkoutBtn').disabled=ids.length===0;}
 
 async function refreshUser(){
   const nav=$('#navRight');
@@ -377,7 +389,8 @@ async function refreshUser(){
   $('#balAddBtn').onclick=()=>$('#topupOverlay').classList.add('show');
   const drop=$('#menuDrop');
   $('#menuBtn').onclick=(e)=>{e.stopPropagation();drop.classList.toggle('show');};
-  document.addEventListener('click',(e)=>{if(!e.target.closest('.menu-wrap'))drop.classList.remove('show');});
+  document.removeEventListener('click',closeMenuOutside);
+  document.addEventListener('click',closeMenuOutside);
   $('#histBtn').onclick=()=>{drop.classList.remove('show');openHistory();};
   $('#myBtn').onclick=()=>{drop.classList.remove('show');openMyProducts();};
   $('#logoutBtn').onclick=()=>{drop.classList.remove('show');$('#logoutOverlay').classList.add('show');};
@@ -501,14 +514,14 @@ $('#checkoutBtn').onclick=()=>{
   openPayModal();
 };
 
-function cartSubtotal(){return Object.keys(cart).reduce((s,id)=>{const p=PRODUCTS.find(x=>x.id===id);return s+(p?p.price:0);},0);}
+function cartSubtotal(){return Object.keys(cart).reduce((s,id)=>{const p=PRODUCTS.find(x=>x.id===id);return s+priceOf(p);},0);}
 
 function openPayModal(){
   appliedPromo=null;
-  $('#promoInput').value='';$('#promoMsg').textContent='';
+  $('#promoInput').value='';$('#promoMsg').textContent='';$('#payMsg').textContent='';
   $('#usePointsChk').checked=false;
-  // Səbət siyahısı
-  $('#payItems').innerHTML=Object.keys(cart).map(id=>{const p=PRODUCTS.find(x=>x.id===id);return p?`${iconFor(p)} ${p.name} — ${money(p.price)}`:'';}).join('<br>');
+  // Səbət siyahısı (endirimli qiymətlə)
+  $('#payItems').innerHTML=Object.keys(cart).map(id=>{const p=PRODUCTS.find(x=>x.id===id);return p?`${iconFor(p)} ${p.name} — ${money(priceOf(p))}`:'';}).join('<br>');
   // Xal sətri
   if(myPoints>0){$('#pointsRow').style.display='flex';$('#availPoints').textContent=myPoints;$('#availPointsM').textContent=money(myPoints);}
   else $('#pointsRow').style.display='none';
