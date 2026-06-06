@@ -5,6 +5,7 @@ const { makeToken, isAdmin } = require('../lib/auth');
 
 module.exports = async (req, res) => {
   const action = req.query.action || '';
+  const b = req.body || {};
 
   // --- LOGIN (auth tələb olunmur) ---
   if (action === 'login') {
@@ -41,7 +42,6 @@ module.exports = async (req, res) => {
 
   // --- PRODUCTS (GET/POST/PUT/DELETE) ---
   if (action === 'products') {
-    const b = req.body || {};
     if (req.method === 'GET') {
       const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: true });
       if (error) return res.status(500).json({ error: error.message });
@@ -178,6 +178,27 @@ module.exports = async (req, res) => {
     const { error } = await supabase.from('products').update({ sale_price: salePrice, sale_ends_at: endsAt }).eq('id', id);
     if (error) return res.status(400).json({ error: error.message });
     return res.json({ ok: true });
+  }
+
+  // --- SETTINGS (kampaniya bitmə tarixi və s.) ---
+  if (action === 'settings') {
+    if (req.method === 'GET') {
+      const { data } = await supabase.from('app_settings').select('*');
+      const map = {};
+      (data || []).forEach((r) => { map[r.key] = r.value; });
+      return res.json(map);
+    }
+    if (req.method === 'POST') {
+      // body: { campaign_ends_at: '2026-06-10T23:59' }  və ya boş = sil
+      const val = b.campaign_ends_at ? new Date(b.campaign_ends_at).toISOString() : null;
+      const { error } = await supabase.from('app_settings').upsert(
+        { key: 'campaign_ends_at', value: val },
+        { onConflict: 'key' }
+      );
+      if (error) return res.status(400).json({ error: error.message });
+      return res.json({ ok: true, campaign_ends_at: val });
+    }
+    return res.status(405).json({ error: 'Metod dəstəklənmir.' });
   }
 
   // --- RESETORDERS (son sifarişləri sıfırla) ---

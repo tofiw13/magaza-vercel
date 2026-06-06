@@ -46,3 +46,14 @@ insert into public.promo_codes (code, discount_percent, active, max_uses, expire
   ('SALAM10', 10, true, null, null),
   ('YENI20',  20, true, 100,  now() + interval '30 days')
 on conflict (code) do nothing;
+
+
+-- 6) TƏNZİMLƏMƏLƏR (kampaniya bitmə tarixi və s.)
+create table if not exists public.app_settings (
+  key   text primary key,
+  value text
+);
+alter table public.app_settings enable row level security;
+-- Hamı oxuya bilər (kampaniya tarixi public-dir)
+drop policy if exists "settings public read" on public.app_settings;
+create policy "settings public read" on public.app_settings for select using (true);

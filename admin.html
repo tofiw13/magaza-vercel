@@ -93,6 +93,15 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{text-align:left
 </div>
 
 <div class="tab-panel" data-panel="sales">
+<div class="card"><h2>🔥 Geri sayım kampaniyası (saytın yuxarısında)</h2>
+<p class="muted" style="margin-bottom:12px">Saytın əsas səhifəsində görünən geri sayım taymerinin bitmə tarixini təyin et. Boş buraxıb saxlasan, taymer gizlədilir.</p>
+<div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+<div style="flex:1;min-width:220px"><label>Kampaniya bitmə tarixi və saatı</label><input id="campEnd" type="datetime-local" style="margin:0"></div>
+<button class="btn green sm" id="campSave">Yadda saxla</button>
+<button class="btn sm red" id="campClear">Taymeri söndür</button>
+</div>
+<div id="campStatus" class="muted" style="margin-top:10px"></div>
+</div>
 <div class="card"><h2>⏰ Müddətli endirimlər (məhsullara)</h2>
 <p class="muted" style="margin-bottom:12px">Hər məhsul üçün endirimli qiymət və bitmə tarixi təyin et. Bitmə tarixi boş olarsa, müddətsiz olur.</p>
 <div id="saleList"></div>
@@ -108,7 +117,38 @@ function uiConfirm(msg,title){return new Promise(res=>{$('#cfTitle').textContent
 function uiPrompt(msg,title){return new Promise(res=>{$('#pmTitle').textContent=title||'Dəyər daxil et';$('#pmMsg').textContent=msg;const inp=$('#pmInput');inp.value='';$('#promptOverlay').classList.add('show');setTimeout(()=>inp.focus(),100);const yes=$('#pmYes'),no=$('#pmNo');const done=v=>{$('#promptOverlay').classList.remove('show');yes.onclick=null;no.onclick=null;inp.onkeydown=null;res(v);};yes.onclick=()=>done(inp.value);no.onclick=()=>done(null);inp.onkeydown=e=>{if(e.key==='Enter')done(inp.value);};});}
 async function login(){$('#loginErr').textContent='';const r=await fetch('/api/admin?action=login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('#pw').value})});const d=await r.json();if(!r.ok){$('#loginErr').textContent=d.error||'Xeta';return;}TOKEN=d.token;localStorage.setItem('adminToken',TOKEN);showDash();}
 function logout(){localStorage.removeItem('adminToken');TOKEN='';$('#dash').classList.add('hidden');$('#loginBox').classList.remove('hidden');}
-async function showDash(){$('#loginBox').classList.add('hidden');$('#dash').classList.remove('hidden');await Promise.all([loadStats(),loadProducts(),loadTopups(),loadPromos()]);}
+async function showDash(){$('#loginBox').classList.add('hidden');$('#dash').classList.remove('hidden');await Promise.all([loadStats(),loadProducts(),loadTopups(),loadPromos(),loadSettings()]);}
+
+// Kampaniya taymeri ayarı
+async function loadSettings(){
+  try{
+    const r=await fetch('/api/admin?action=settings',{headers:H()});
+    if(!r.ok)return;
+    const d=await r.json();
+    const v=d.campaign_ends_at;
+    if(v){
+      const dt=new Date(v);
+      // datetime-local üçün lokal formata çevir (YYYY-MM-DDTHH:mm)
+      const pad=n=>String(n).padStart(2,'0');
+      $('#campEnd').value=`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+      $('#campStatus').textContent='Aktiv: '+dt.toLocaleString('az')+' tarixinədək.';
+    }else{
+      $('#campEnd').value='';
+      $('#campStatus').textContent='Taymer söndürülüb.';
+    }
+  }catch(e){}
+}
+$('#campSave') && ($('#campSave').onclick=async()=>{
+  const v=$('#campEnd').value;
+  if(!v){toast('Tarix seç və ya "Taymeri söndür" düyməsini işlət.','red');return;}
+  const r=await fetch('/api/admin?action=settings',{method:'POST',headers:H(),body:JSON.stringify({campaign_ends_at:v})});
+  if(r.ok){loadSettings();toast('Kampaniya tarixi yadda saxlanıldı.','green');}
+  else{const d=await r.json().catch(()=>({}));toast('Xəta: '+(d.error||''),'red');}
+});
+$('#campClear') && ($('#campClear').onclick=async()=>{
+  const r=await fetch('/api/admin?action=settings',{method:'POST',headers:H(),body:JSON.stringify({campaign_ends_at:null})});
+  if(r.ok){loadSettings();toast('Taymer söndürüldü.','red');}
+});
 async function loadTopups(){const r=await fetch('/api/admin?action=topups',{headers:H()});if(r.status===401){logout();return;}const list=await r.json();const box=$('#topupsList');if(!list.length){box.innerHTML='<span class="muted">Sorğu yoxdur.</span>';return;}
 box.innerHTML=list.map(t=>`<div class="prow" data-tid="${t.id}"><div><div class="pname">${money(t.amount)} · ${t.user_email||''}</div><div class="pmeta">${new Date(t.created_at).toLocaleString('az')} · status: <b>${t.status}</b></div>${t.receiptUrl?`<a href="${t.receiptUrl}" target="_blank" style="color:#60a5fa;font-size:.8rem">📄 Qəbzə bax</a>`:''}</div><div class="actions">${t.status==='pending'?'<button class="btn sm green" data-ap>Təsdiqlə</button><button class="btn sm red" data-rj>Rədd</button>':'<span class="muted" style="font-size:.8rem">'+t.status+'</span>'}</div></div>`).join('');
 document.querySelectorAll('[data-tid]').forEach(row=>{const id=Number(row.dataset.tid);const ap=row.querySelector('[data-ap]');const rj=row.querySelector('[data-rj]');if(ap)ap.onclick=async()=>{ap.textContent='...';const r=await fetch('/api/admin?action=topups',{method:'POST',headers:H(),body:JSON.stringify({id,action:'approve'})});if(r.ok){loadTopups();loadStats();toast('Balans təsdiqləndi.','green');}};if(rj)rj.onclick=async()=>{if(!await uiConfirm('Bu balans sorğusu rədd edilsin?','Rədd et'))return;const r=await fetch('/api/admin?action=topups',{method:'POST',headers:H(),body:JSON.stringify({id,action:'reject'})});if(r.ok){loadTopups();toast('Sorğu rədd edildi.','red');}};});}
@@ -158,7 +198,7 @@ async function loadPromos(){
   document.querySelectorAll('#promoList .prow').forEach(row=>{
     const code=row.dataset.code;const p=list.find(x=>x.code===code);
     row.querySelector('[data-toggle]').onclick=async()=>{const r=await fetch('/api/admin?action=promos',{method:'POST',headers:H(),body:JSON.stringify({code:p.code,discount_percent:p.discount_percent,active:!p.active,max_uses:p.max_uses,expires_at:p.expires_at})});if(r.ok){loadPromos();toast('Yeniləndi.','green');}};
-    row.querySelector('[data-delp]').onclick=async()=>{if(!await uiConfirm('Bu kupon silinsin?','Kuponu sil'))return;const r=await fetch('/api/admin?action=promos',{method:'DELETE',headers:H(),body:JSON.stringify({code})});if(r.ok){loadPromos();toast('Kupon silindi.','red');}};
+    row.querySelector('[data-delp]').onclick=async()=>{if(!await uiConfirm('Bu kupon silinsin?','Kuponu sil'))return;const r=await fetch('/api/admin?action=promos&code='+encodeURIComponent(code),{method:'DELETE',headers:H()});if(r.ok){loadPromos();toast('Kupon silindi.','red');}else{const d=await r.json().catch(()=>({}));toast('Xəta: '+(d.error||'silinmədi'),'red');}};
   });
 }
 $('#pcAdd').onclick=async()=>{

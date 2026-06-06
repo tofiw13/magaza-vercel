@@ -274,27 +274,21 @@ function iconFor(p){return ICONS[p.id]||p.emoji||'📦';}
 function toast(text,type){const t=$('#toast');t.textContent=text;t.className='toast '+(type==='red'?'red':'green')+' show';setTimeout(()=>t.classList.remove('show'),4000);}
 
 // ===== GERİ SAYIM TAYMERİ =====
-// Kampaniya bitmə anı: hər həftənin bazar günü 23:59 (lokal). Keçibsə növbəti həftəyə.
-function getCampaignEnd(){
-  const saved=localStorage.getItem('campaignEnd');
-  if(saved){const d=new Date(saved);if(d>new Date())return d;}
-  const now=new Date();
-  const end=new Date(now);
-  const daysToSun=(7-now.getDay())%7; // 0=bazar
-  end.setDate(now.getDate()+(daysToSun===0?7:daysToSun));
-  end.setHours(23,59,59,0);
-  localStorage.setItem('campaignEnd',end.toISOString());
-  return end;
-}
+// Bitmə anı admin paneldən təyin olunur (CFG.campaignEndsAt). Yoxdursa taymer gizli.
 function startCountdown(){
-  const end=getCampaignEnd();
   const box=$('#countdown');
   if(cdTimer)clearInterval(cdTimer);
+  const endStr=CFG&&CFG.campaignEndsAt;
+  if(!endStr){box.style.display='none';return;}
+  const end=new Date(endStr);
+  if(isNaN(end.getTime())){box.style.display='none';return;}
   function tick(){
     const diff=end-new Date();
-    if(diff<=0){box.style.display='none';clearInterval(cdTimer);localStorage.removeItem('campaignEnd');return;}
-    const h=Math.floor(diff/3.6e6),m=Math.floor(diff%3.6e6/6e4),s=Math.floor(diff%6e4/1e3);
-    $('#cdH').textContent=String(h).padStart(2,'0');
+    if(diff<=0){box.style.display='none';clearInterval(cdTimer);return;}
+    const d=Math.floor(diff/8.64e7);
+    const h=Math.floor(diff%8.64e7/3.6e6),m=Math.floor(diff%3.6e6/6e4),s=Math.floor(diff%6e4/1e3);
+    const hh=d>0?d*24+h:h; // günləri saata əlavə et
+    $('#cdH').textContent=String(hh).padStart(2,'0');
     $('#cdM').textContent=String(m).padStart(2,'0');
     $('#cdS').textContent=String(s).padStart(2,'0');
     box.style.display='flex';
@@ -305,9 +299,9 @@ function startCountdown(){
 async function init(){
   $('#year').textContent=new Date().getFullYear();
   const tb=$('#themeBtn');if(tb)tb.onclick=toggleTheme;
-  startCountdown();
   CFG=await fetch('/api/config').then(r=>r.json()).catch(()=>({}));
   $('#payInfo').textContent=CFG.paymentInfo||'';
+  startCountdown();
   if(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase){
     sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);
     const {data}=await sb.auth.getSession();session=data.session;
