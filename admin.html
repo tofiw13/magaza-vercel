@@ -1,77 +1,427 @@
 <!DOCTYPE html>
 <html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel</title><style>
-:root{--bg:#0b1120;--card:#161f33;--card2:#1f2a44;--accent:#22c55e;--accent2:#6366f1;--danger:#ef4444;--text:#e8edf6;--muted:#94a3b8;--border:#2a3650}
+:root{--bg:#0b1120;--card:#161f33;--card2:#1f2a44;--accent:#22c55e;--accent2:#6366f1;--accent3:#f59e0b;--danger:#ef4444;--text:#e8edf6;--muted:#94a3b8;--border:#2a3650}
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
-body{background:var(--bg);color:var(--text);line-height:1.5;padding:20px}.wrap{max-width:1000px;margin:0 auto}
+body{background:var(--bg);color:var(--text);line-height:1.5;padding:20px}.wrap{max-width:1100px;margin:0 auto}
 h1{font-size:1.5rem;margin-bottom:4px}.muted{color:var(--muted);font-size:.9rem}
 .login{max-width:380px;margin:80px auto;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center}
-input,textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);font-size:.95rem;outline:none;margin-bottom:12px}
-input:focus,textarea:focus{border-color:var(--accent2)}
-.btn{border:none;border-radius:9px;padding:11px 18px;font-size:.95rem;font-weight:600;cursor:pointer;color:#fff;background:var(--accent2)}
-.btn.green{background:var(--accent);color:#06231a}.btn.red{background:var(--danger)}.btn.sm{padding:6px 12px;font-size:.82rem}
+input,textarea,select{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);font-size:.95rem;outline:none;margin-bottom:12px}
+input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
+.btn{border:none;border-radius:9px;padding:11px 18px;font-size:.95rem;font-weight:600;cursor:pointer;color:#fff;background:var(--accent2);text-decoration:none;display:inline-block}
+.btn.green{background:var(--accent);color:#06231a}.btn.red{background:var(--danger)}.btn.orange{background:var(--accent3)}.btn.sm{padding:6px 12px;font-size:.82rem}
 .err{color:#f87171;font-size:.85rem;min-height:18px;margin-bottom:6px}.hidden{display:none}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:10px}
-.banner{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:#fcd34d;padding:9px 14px;border-radius:9px;font-size:.83rem;margin-bottom:18px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px}
 .stat{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:18px}
 .stat .n{font-size:1.7rem;font-weight:700}.stat .c{font-size:.8rem;color:var(--muted)}
 .stat.balance{background:linear-gradient(135deg,rgba(34,197,94,.18),rgba(34,197,94,.05));border-color:rgba(34,197,94,.4)}.stat.balance .n{color:var(--accent)}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}.card h2{font-size:1.1rem;margin-bottom:14px}
+.stat.points{background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(245,158,11,.05));border-color:rgba(245,158,11,.4)}.stat.points .n{color:var(--accent3)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}
+.card h2{font-size:1.1rem;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--border)}th{color:var(--muted);font-size:.78rem;text-transform:uppercase}
-.prow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
-.prow .pname{font-weight:600}.prow .pmeta{font-size:.78rem;color:var(--muted)}.actions{display:flex;gap:6px}
+.prow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}.prow .pname{font-weight:600}.prow .pmeta{font-size:.78rem;color:var(--muted)}.actions{display:flex;gap:6px;flex-wrap:wrap}
 .addgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px}
-/* Sayt-içi modal + toast */
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}.tabs button{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-weight:600;transition:all .2s}
+.tabs button:hover{border-color:var(--accent2);color:var(--text)}.tabs button.active{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+.tab-content{display:none}.tab-content.active{display:block}
+/* Modal */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:90;padding:18px}
-.overlay.show{display:flex}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px;max-width:380px;width:100%;text-align:center}
+.overlay.show{display:flex}.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px;max-width:480px;width:100%}
 .modal h3{font-size:1.15rem;margin-bottom:8px}.modal p{color:var(--muted);font-size:.9rem;margin-bottom:18px}
-.modal input{margin-bottom:16px}
-.modal .row{display:flex;gap:10px}.modal .row .btn{flex:1}
+.modal .row{display:flex;gap:10px;margin-top:16px}.modal .row .btn{flex:1}
 .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);z-index:100;padding:14px 24px;border-radius:12px;font-weight:700;font-size:.95rem;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 10px 30px rgba(0,0,0,.4);text-align:center;max-width:90vw}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.toast.green{background:var(--accent);color:#06231a}.toast.red{background:var(--danger);color:#fff}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.green{background:var(--accent);color:#06231a}.toast.red{background:var(--danger);color:#fff}
+/* Promo kod sətiri */
+.promo-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.promo-row .code{font-weight:700;color:var(--accent3)}.promo-row .discount{color:var(--accent);font-size:.9rem}
+/* Flash sale sətiri */
+.sale-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.sale-row .sale-badge{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:4px}
+@media(max-width:700px){.prow,.promo-row,.sale-row{grid-template-columns:1fr}.actions{margin-top:8px}}
 </style></head><body><div class="wrap">
 <div class="toast" id="toast"></div>
-<div class="overlay" id="confirmOverlay"><div class="modal"><h3 id="cfTitle">Təsdiq</h3><p id="cfMsg"></p><div class="row"><button class="btn" style="background:var(--card2)" id="cfNo">İmtina</button><button class="btn red" id="cfYes">Bəli</button></div></div></div>
-<div class="overlay" id="promptOverlay"><div class="modal"><h3 id="pmTitle">Dəyər daxil et</h3><p id="pmMsg"></p><input id="pmInput" type="number" step="0.01" placeholder="Məbləğ"><div class="row"><button class="btn" style="background:var(--card2)" id="pmNo">İmtina</button><button class="btn green" id="pmYes">Təsdiqlə</button></div></div></div>
-<div class="login" id="loginBox"><h1>🔐 Admin Panel</h1><p class="muted" style="margin-bottom:18px">Parolu daxil et</p>
-<div class="err" id="loginErr"></div><input type="password" id="pw" placeholder="Parol"><button class="btn" style="width:100%" id="loginBtn">Daxil ol</button></div>
-<div id="dash" class="hidden">
-<div class="topbar"><div><h1>📊 Admin Panel</h1><p class="muted">Statistika ve idareetme</p></div>
-<div><a class="btn sm" href="/" target="_blank" style="text-decoration:none">Magaza</a> <button class="btn sm red" id="logoutBtn">Cixis</button></div></div>
-<div class="stats">
-<div class="stat balance"><div class="n" id="st_balance">0 ₼</div><div class="c">Umumi balans</div></div>
-<div class="stat"><div class="n" id="st_orders">0</div><div class="c">Sifaris</div></div>
-<div class="stat"><div class="n" id="st_items">0</div><div class="c">Satilan</div></div>
-<div class="stat"><div class="n" id="st_products">0</div><div class="c">Kataloq</div></div>
-<div class="stat"><div class="n" id="st_users">0</div><div class="c">İstifadəçi</div></div></div>
-<div class="card"><h2>👥 İstifadəçilər və balansları</h2><table><thead><tr><th>Email</th><th>Balans</th><th>İdarəetmə</th></tr></thead><tbody id="usersBody"><tr><td colspan="3" class="muted">Yüklənir...</td></tr></tbody></table></div>
-<div class="card"><h2>💰 Balans sorğuları (təsdiq)</h2><div id="topupsList" class="muted">Yüklənir...</div></div>
-<div class="card"><h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px">Son sifarisler <button class="btn sm red" id="resetOrdersBtn" style="font-weight:600">🗑️ Sıfırla</button></h2><table><thead><tr><th>Tarix</th><th>Mehsullar</th><th>Mebleg</th></tr></thead><tbody id="ordersBody"><tr><td colspan="3" class="muted">Hele sifaris yoxdur.</td></tr></tbody></table></div>
-<div class="card"><h2>Mehsullari idare et</h2><div id="productList"></div></div>
+
+<!-- Təsdiq Modal -->
+<div class="overlay" id="confirmOverlay"><div class="modal" style="text-align:center">
+  <h3 id="cfTitle">Təsdiq</h3><p id="cfMsg"></p>
+  <div class="row"><button class="btn" style="background:var(--card2)" id="cfNo">İmtina</button><button class="btn red" id="cfYes">Bəli</button></div>
 </div></div>
+
+<!-- Flash Sale Modal -->
+<div class="overlay" id="flashModal"><div class="modal">
+  <h3>🔥 Flash Sale Yarat</h3>
+  <p>Endirimli kampaniya əlavə et</p>
+  <label>Məhsul</label><select id="flashProduct"></select>
+  <label>Endirim faizi (%)</label><input type="number" id="flashDiscount" placeholder="məs: 30" min="1" max="90">
+  <label>Bitmə tarixi</label><input type="datetime-local" id="flashEnd">
+  <div class="row"><button class="btn" style="background:var(--card2)" onclick="$('#flashModal').classList.remove('show')">İmtina</button><button class="btn orange" id="flashSave">Yarat</button></div>
+</div></div>
+
+<!-- Promo Kod Modal -->
+<div class="overlay" id="promoModal"><div class="modal">
+  <h3>🎁 Promo Kod Yarat</h3>
+  <p>Endirim kuponu əlavə et</p>
+  <label>Kod</label><input type="text" id="promoCode" placeholder="məs: YENI2024" style="text-transform:uppercase">
+  <label>Endirim faizi (%)</label><input type="number" id="promoDiscount" placeholder="məs: 10" min="0" max="100">
+  <label>Minimum sifariş (₼)</label><input type="number" id="promoMin" placeholder="məs: 5" step="0.01">
+  <label>Maksimum istifadə (boş saxla = limitsiz)</label><input type="number" id="promoMaxUses" placeholder="məs: 100">
+  <div class="row"><button class="btn" style="background:var(--card2)" onclick="$('#promoModal').classList.remove('show')">İmtina</button><button class="btn orange" id="promoSave">Yarat</button></div>
+</div></div>
+
+<!-- Login -->
+<div class="login" id="loginBox">
+  <h1>🔐 Admin Panel</h1>
+  <p class="muted" style="margin-bottom:18px">Parolu daxil et</p>
+  <div class="err" id="loginErr"></div>
+  <input type="password" id="pw" placeholder="Parol">
+  <button class="btn" style="width:100%" id="loginBtn">Daxil ol</button>
+</div>
+
+<!-- Dashboard -->
+<div id="dash" class="hidden">
+  <div class="topbar">
+    <div><h1>📊 Admin Panel</h1><p class="muted">Statistika və idarəetmə</p></div>
+    <div><a class="btn sm" href="/" target="_blank">Mağaza</a> <button class="btn sm red" id="logoutBtn">Çıxış</button></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat balance"><div class="n" id="st_balance">0 ₼</div><div class="c">Ümumi balans</div></div>
+    <div class="stat points"><div class="n" id="st_points">0</div><div class="c">Xal dövriyyəsi</div></div>
+    <div class="stat"><div class="n" id="st_orders">0</div><div class="c">Sifariş</div></div>
+    <div class="stat"><div class="n" id="st_items">0</div><div class="c">Satılan</div></div>
+    <div class="stat"><div class="n" id="st_products">0</div><div class="c">Kataloq</div></div>
+    <div class="stat"><div class="n" id="st_users">0</div><div class="c">İstifadəçi</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="active" data-tab="tab-users">👥 İstifadəçilər</button>
+    <button data-tab="tab-topups">💰 Balans sorğuları</button>
+    <button data-tab="tab-orders">📦 Sifarişlər</button>
+    <button data-tab="tab-products">🛍️ Məhsullar</button>
+    <button data-tab="tab-flash">🔥 Flash Sales</button>
+    <button data-tab="tab-promo">🎁 Promo kodlar</button>
+  </div>
+
+  <!-- Tab: İstifadəçilər -->
+  <div class="tab-content active" id="tab-users">
+    <div class="card"><h2>👥 İstifadəçilər və balansları</h2>
+      <table><thead><tr><th>Email</th><th>Balans</th><th>Xal</th><th>İdarəetmə</th></tr></thead>
+      <tbody id="usersBody"><tr><td colspan="4" class="muted">Yüklənir...</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- Tab: Balans sorğuları -->
+  <div class="tab-content" id="tab-topups">
+    <div class="card"><h2>💰 Balans sorğuları (təsdiq)</h2>
+      <div id="topupsList" class="muted">Yüklənir...</div>
+    </div>
+  </div>
+
+  <!-- Tab: Sifarişlər -->
+  <div class="tab-content" id="tab-orders">
+    <div class="card"><h2><span>📦 Son sifarişlər</span><button class="btn sm red" id="resetOrdersBtn">🗑️ Sıfırla</button></h2>
+      <table><thead><tr><th>Tarix</th><th>Məhsullar</th><th>Məbləğ</th><th>Status</th></tr></thead>
+      <tbody id="ordersBody"><tr><td colspan="4" class="muted">Hələ sifariş yoxdur.</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- Tab: Məhsullar -->
+  <div class="tab-content" id="tab-products">
+    <div class="card"><h2>🛍️ Məhsulları idarə et</h2><div id="productList"></div></div>
+  </div>
+
+  <!-- Tab: Flash Sales -->
+  <div class="tab-content" id="tab-flash">
+    <div class="card"><h2><span>🔥 Flash Sales</span><button class="btn sm orange" id="addFlashBtn">+ Yeni</button></h2>
+      <div id="flashList"><p class="muted">Yüklənir...</p></div>
+    </div>
+  </div>
+
+  <!-- Tab: Promo kodlar -->
+  <div class="tab-content" id="tab-promo">
+    <div class="card"><h2><span>🎁 Promo kodlar</span><button class="btn sm orange" id="addPromoBtn">+ Yeni</button></h2>
+      <div id="promoList"><p class="muted">Yüklənir...</p></div>
+    </div>
+  </div>
+</div></div>
+
 <script>
-const $=s=>document.querySelector(s);const money=c=>(c/100).toFixed(2)+' ₼';let TOKEN=localStorage.getItem('adminToken')||'';
+const $=s=>document.querySelector(s);
+const money=c=>(c/100).toFixed(2)+' ₼';
+let TOKEN=localStorage.getItem('adminToken')||'';
 function H(){return{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN};}
-// Sayt-içi bildiriş və modallar
-function toast(text,type){const t=$('#toast');t.textContent=text;t.className='toast '+(type==='red'?'red':'green')+' show';setTimeout(()=>t.classList.remove('show'),3500);}
-function uiConfirm(msg,title){return new Promise(res=>{$('#cfTitle').textContent=title||'Təsdiq';$('#cfMsg').textContent=msg;$('#confirmOverlay').classList.add('show');const yes=$('#cfYes'),no=$('#cfNo');const done=v=>{$('#confirmOverlay').classList.remove('show');yes.onclick=null;no.onclick=null;res(v);};yes.onclick=()=>done(true);no.onclick=()=>done(false);});}
-function uiPrompt(msg,title){return new Promise(res=>{$('#pmTitle').textContent=title||'Dəyər daxil et';$('#pmMsg').textContent=msg;const inp=$('#pmInput');inp.value='';$('#promptOverlay').classList.add('show');setTimeout(()=>inp.focus(),100);const yes=$('#pmYes'),no=$('#pmNo');const done=v=>{$('#promptOverlay').classList.remove('show');yes.onclick=null;no.onclick=null;inp.onkeydown=null;res(v);};yes.onclick=()=>done(inp.value);no.onclick=()=>done(null);inp.onkeydown=e=>{if(e.key==='Enter')done(inp.value);};});}
-async function login(){$('#loginErr').textContent='';const r=await fetch('/api/admin?action=login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('#pw').value})});const d=await r.json();if(!r.ok){$('#loginErr').textContent=d.error||'Xeta';return;}TOKEN=d.token;localStorage.setItem('adminToken',TOKEN);showDash();}
-function logout(){localStorage.removeItem('adminToken');TOKEN='';$('#dash').classList.add('hidden');$('#loginBox').classList.remove('hidden');}
-async function showDash(){$('#loginBox').classList.add('hidden');$('#dash').classList.remove('hidden');await Promise.all([loadStats(),loadProducts(),loadTopups()]);}
-async function loadTopups(){const r=await fetch('/api/admin?action=topups',{headers:H()});if(r.status===401){logout();return;}const list=await r.json();const box=$('#topupsList');if(!list.length){box.innerHTML='<span class="muted">Sorğu yoxdur.</span>';return;}
-box.innerHTML=list.map(t=>`<div class="prow" data-tid="${t.id}"><div><div class="pname">${money(t.amount)} · ${t.user_email||''}</div><div class="pmeta">${new Date(t.created_at).toLocaleString('az')} · status: <b>${t.status}</b></div>${t.receiptUrl?`<a href="${t.receiptUrl}" target="_blank" style="color:#60a5fa;font-size:.8rem">📄 Qəbzə bax</a>`:''}</div><div class="actions">${t.status==='pending'?'<button class="btn sm green" data-ap>Təsdiqlə</button><button class="btn sm red" data-rj>Rədd</button>':'<span class="muted" style="font-size:.8rem">'+t.status+'</span>'}</div></div>`).join('');
-document.querySelectorAll('[data-tid]').forEach(row=>{const id=Number(row.dataset.tid);const ap=row.querySelector('[data-ap]');const rj=row.querySelector('[data-rj]');if(ap)ap.onclick=async()=>{ap.textContent='...';const r=await fetch('/api/admin?action=topups',{method:'POST',headers:H(),body:JSON.stringify({id,action:'approve'})});if(r.ok){loadTopups();loadStats();toast('Balans təsdiqləndi.','green');}};if(rj)rj.onclick=async()=>{if(!await uiConfirm('Bu balans sorğusu rədd edilsin?','Rədd et'))return;const r=await fetch('/api/admin?action=topups',{method:'POST',headers:H(),body:JSON.stringify({id,action:'reject'})});if(r.ok){loadTopups();toast('Sorğu rədd edildi.','red');}};});}
-async function loadStats(){const r=await fetch('/api/admin?action=stats',{headers:H()});if(r.status===401){logout();return;}const d=await r.json();$('#st_balance').textContent=money(d.balance);$('#st_orders').textContent=d.orderCount;$('#st_items').textContent=d.itemsSold;$('#st_products').textContent=d.productCount;if($('#st_users'))$('#st_users').textContent=d.userCount||0;const ob=$('#ordersBody');if(!d.recent.length)ob.innerHTML='<tr><td colspan="3" class="muted">Hele sifaris yoxdur.</td></tr>';else ob.innerHTML=d.recent.map(o=>`<tr><td>${new Date(o.created_at).toLocaleString('az')}</td><td>${(o.items||[]).map(i=>(i.emoji||'')+' '+i.name).join(', ')}</td><td>${money(o.total)}</td></tr>`).join('');
-const ub=$('#usersBody');if(ub){const us=d.users||[];if(!us.length)ub.innerHTML='<tr><td colspan="3" class="muted">İstifadəçi yoxdur.</td></tr>';else ub.innerHTML=us.map(u=>`<tr><td>${u.email||'—'}</td><td style="color:#22c55e;font-weight:700">${money(u.balance||0)}</td><td><div class="actions"><button class="btn sm green" onclick="setBalance('${(u.email||'').replace(/'/g,"")}','add')">+/−</button><button class="btn sm" onclick="setBalance('${(u.email||'').replace(/'/g,"")}','set')">Təyin et</button></div></td></tr>`).join('');}}
-async function loadProducts(){const r=await fetch('/api/admin?action=products',{headers:H()});if(r.status===401){logout();return;}const list=await r.json();$('#productList').innerHTML=list.map(p=>`<div class="prow" data-id="${p.id}"><div><div class="pname">${p.emoji||'📦'} ${p.name}</div><div class="pmeta">${p.id} · fayl: ${p.file_path||'—'}</div></div><div style="display:flex;align-items:center;gap:6px"><input type="number" value="${(p.price/100).toFixed(2)}" step="0.01" style="width:80px;margin:0" data-price>₼</div><div class="actions"><button class="btn sm green" data-save>Saxla</button><button class="btn sm red" data-del>Sil</button></div></div>`).join('');
-document.querySelectorAll('.prow').forEach(row=>{const id=row.dataset.id;row.querySelector('[data-save]').addEventListener('click',async()=>{const price=Math.round(parseFloat(row.querySelector('[data-price]').value)*100)||0;const r=await fetch('/api/admin?action=products',{method:'PUT',headers:H(),body:JSON.stringify({id,price})});if(r.ok){toast('Qiymət yeniləndi.','green');loadStats();}});row.querySelector('[data-del]').addEventListener('click',async()=>{if(!await uiConfirm('Bu məhsul silinsin?','Məhsulu sil'))return;const r=await fetch('/api/admin?action=products',{method:'DELETE',headers:H(),body:JSON.stringify({id})});if(r.ok){loadProducts();loadStats();toast('Məhsul silindi.','red');}});});}
-async function setBalance(email,mode){const cur=mode==='set'?'Yeni balans (₼) daxil et':'Əlavə/çıxılacaq məbləğ (₼) — mənfi də olar';const v=await uiPrompt(email+'\n'+cur,mode==='set'?'Balansı təyin et':'Balansı dəyiş');if(v===null||v==='')return;const amount=parseFloat(v);if(isNaN(amount)){toast('Düzgün rəqəm yaz.','red');return;}const r=await fetch('/api/admin?action=setbalance',{method:'POST',headers:H(),body:JSON.stringify({email,mode,amount})});const d=await r.json();if(!r.ok){toast('Xəta: '+(d.error||''),'red');return;}loadStats();toast('Balans yeniləndi: '+email,'green');}
-$('#loginBtn').addEventListener('click',login);$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')login();});$('#logoutBtn').addEventListener('click',logout);
-document.addEventListener('click',async e=>{if(e.target&&e.target.id==='resetOrdersBtn'){if(!await uiConfirm('Bütün son sifarişlər silinsin? (İstifadəçi balansları toxunulmayacaq)','Sifarişləri sıfırla'))return;const r=await fetch('/api/admin?action=resetorders',{method:'POST',headers:H()});if(r.ok){loadStats();toast('Son sifarişlər sıfırlandı.','green');}else{toast('Xəta baş verdi.','red');}}});
+
+function toast(text,type){
+  const t=$('#toast');
+  t.textContent=text;
+  t.className='toast '+(type==='red'?'red':'green')+' show';
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+function uiConfirm(msg,title){
+  return new Promise(res=>{
+    $('#cfTitle').textContent=title||'Təsdiq';
+    $('#cfMsg').textContent=msg;
+    $('#confirmOverlay').classList.add('show');
+    const done=v=>{
+      $('#confirmOverlay').classList.remove('show');
+      $('#cfYes').onclick=null;
+      $('#cfNo').onclick=null;
+      res(v);
+    };
+    $('#cfYes').onclick=()=>done(true);
+    $('#cfNo').onclick=()=>done(false);
+  });
+}
+
+// Tab keçidləri
+document.querySelectorAll('.tabs button').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    $('#'+btn.dataset.tab).classList.add('active');
+  };
+});
+
+async function login(){
+  $('#loginErr').textContent='';
+  const r=await fetch('/api/admin?action=login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({password:$('#pw').value})
+  });
+  const d=await r.json();
+  if(!r.ok){$('#loginErr').textContent=d.error||'Xəta';return;}
+  TOKEN=d.token;
+  localStorage.setItem('adminToken',TOKEN);
+  showDash();
+}
+
+function logout(){
+  localStorage.removeItem('adminToken');
+  TOKEN='';
+  $('#dash').classList.add('hidden');
+  $('#loginBox').classList.remove('hidden');
+}
+
+async function showDash(){
+  $('#loginBox').classList.add('hidden');
+  $('#dash').classList.remove('hidden');
+  await Promise.all([loadStats(),loadProducts(),loadTopups(),loadFlashSales(),loadPromoCodes()]);
+}
+
+async function loadTopups(){
+  const r=await fetch('/api/admin?action=topups',{headers:H()});
+  if(r.status===401){logout();return;}
+  const list=await r.json();
+  const box=$('#topupsList');
+  if(!list.length){box.innerHTML='<span class="muted">Sorğu yoxdur.</span>';return;}
+  box.innerHTML=list.map(t=>`<div class="prow" data-tid="${t.id}">
+    <div><div class="pname">${money(t.amount)} · ${t.user_email||''}</div>
+    <div class="pmeta">${new Date(t.created_at).toLocaleString('az')} · <b>${t.status}</b></div>
+    ${t.receiptUrl?`<a href="${t.receiptUrl}" target="_blank" style="color:#60a5fa;font-size:.8rem">📄 Qəbzə bax</a>`:''}</div>
+    <div class="actions">${t.status==='pending'?'<button class="btn sm green" data-ap>Təsdiqlə</button><button class="btn sm red" data-rj>Rədd</button>':'<span class="muted" style="font-size:.8rem">'+t.status+'</span>'}</div>
+  </div>`).join('');
+  
+  document.querySelectorAll('[data-tid]').forEach(row=>{
+    const id=Number(row.dataset.tid);
+    const ap=row.querySelector('[data-ap]');
+    const rj=row.querySelector('[data-rj]');
+    if(ap)ap.onclick=async()=>{
+      ap.textContent='...';
+      const r=await fetch('/api/admin?action=topups',{method:'POST',headers:H(),body:JSON.stringify({id,action:'approve'})});
+      if(r.ok){loadTopups();loadStats();toast('Balans təsdiqləndi.','green');}
+    };
+    if(rj)rj.onclick=async()=>{
+      if(!await uiConfirm('Bu balans sorğusu rədd edilsin?','Rədd et'))return;
+      const r=await fetch('/api/admin?action=topups',{method:'POST',headers:H(),body:JSON.stringify({id,action:'reject'})});
+      if(r.ok){loadTopups();toast('Sorğu rədd edildi.','red');}
+    };
+  });
+}
+
+async function loadStats(){
+  const r=await fetch('/api/admin?action=stats',{headers:H()});
+  if(r.status===401){logout();return;}
+  const d=await r.json();
+  $('#st_balance').textContent=money(d.balance);
+  $('#st_points').textContent=d.totalPoints||0;
+  $('#st_orders').textContent=d.orderCount;
+  $('#st_items').textContent=d.itemsSold;
+  $('#st_products').textContent=d.productCount;
+  $('#st_users').textContent=d.userCount||0;
+  
+  const ob=$('#ordersBody');
+  if(!d.recent.length)ob.innerHTML='<tr><td colspan="4" class="muted">Hələ sifariş yoxdur.</td></tr>';
+  else ob.innerHTML=d.recent.map(o=>`<tr>
+    <td>${new Date(o.created_at).toLocaleString('az')}</td>
+    <td>${(o.items||[]).map(i=>(i.emoji||'')+' '+i.name).join(', ')}</td>
+    <td>${money(o.total)}</td>
+    <td><span class="tag ${o.status||'completed'}">${o.status||'completed'}</span></td>
+  </tr>`).join('');
+  
+  const ub=$('#usersBody');
+  if(ub){
+    const us=d.users||[];
+    if(!us.length)ub.innerHTML='<tr><td colspan="4" class="muted">İstifadəçi yoxdur.</td></tr>';
+    else ub.innerHTML=us.map(u=>`<tr>
+      <td>${u.email||'—'}</td>
+      <td style="color:#22c55e;font-weight:700">${money(u.balance||0)}</td>
+      <td style="color:#f59e0b">⭐ ${u.points||0}</td>
+      <td><div class="actions"><button class="btn sm green" onclick="setBalance('${(u.email||'').replace(/'/g,"")}')">+/−</button></div></td>
+    </tr>`).join('');
+  }
+}
+
+async function loadProducts(){
+  const r=await fetch('/api/admin?action=products',{headers:H()});
+  if(r.status===401){logout();return;}
+  const list=await r.json();
+  $('#productList').innerHTML=list.map(p=>`<div class="prow" data-id="${p.id}">
+    <div><div class="pname">${p.emoji||'📦'} ${p.name}</div>
+    <div class="pmeta">${p.id} · fayl: ${p.file_path||'—'}</div></div>
+    <div style="display:flex;align-items:center;gap:6px"><input type="number" value="${(p.price/100).toFixed(2)}" step="0.01" style="width:80px;margin:0" data-price>₼</div>
+    <div class="actions"><button class="btn sm green" data-save>Saxla</button></div>
+  </div>`).join('');
+  
+  document.querySelectorAll('.prow').forEach(row=>{
+    const id=row.dataset.id;
+    row.querySelector('[data-save]').addEventListener('click',async()=>{
+      const price=Math.round(parseFloat(row.querySelector('[data-price]').value)*100)||0;
+      const r=await fetch('/api/admin?action=products',{method:'PUT',headers:H(),body:JSON.stringify({id,price})});
+      if(r.ok){toast('Qiymət yeniləndi.','green');loadStats();}
+    });
+  });
+}
+
+// Flash Sales
+async function loadFlashSales(){
+  const r=await fetch('/api/admin?action=flash-sales',{headers:H()});
+  if(r.status===401){logout();return;}
+  const list=await r.json();
+  const box=$('#flashList');
+  if(!list.length){box.innerHTML='<p class="muted">Aktiv flash sale yoxdur.</p>';return;}
+  box.innerHTML=list.map(s=>`<div class="sale-row">
+    <div><span class="sale-badge">-${s.discount_percent}%</span> <b>${s.product_name||s.product_id}</b></div>
+    <div><span style="text-decoration:line-through;color:var(--muted)">${money(s.original_price)}</span> → <span style="color:#ef4444">${money(s.sale_price)}</span></div>
+    <div class="muted">${new Date(s.ends_at).toLocaleString('az')}</div>
+    <div class="actions"><button class="btn sm red" onclick="deleteFlash(${s.id})">Sil</button></div>
+  </div>`).join('');
+}
+
+$('#addFlashBtn').onclick=async()=>{
+  // Məhsulları yüklə
+  const products=await fetch('/api/admin?action=products',{headers:H()}).then(r=>r.json());
+  $('#flashProduct').innerHTML=products.map(p=>`<option value="${p.id}">${p.name} (${money(p.price)})</option>`).join('');
+  $('#flashModal').classList.add('show');
+};
+
+$('#flashSave').onclick=async()=>{
+  const product_id=$('#flashProduct').value;
+  const discount_percent=parseInt($('#flashDiscount').value)||0;
+  const ends_at=$('#flashEnd').value;
+  
+  if(!product_id||!discount_percent||!ends_at){toast('Bütün sahələri doldurun.','red');return;}
+  
+  const r=await fetch('/api/admin?action=flash-sales',{
+    method:'POST',
+    headers:H(),
+    body:JSON.stringify({product_id,discount_percent,ends_at})
+  });
+  
+  if(r.ok){
+    $('#flashModal').classList.remove('show');
+    loadFlashSales();
+    toast('Flash sale yaradıldı!','green');
+  }else{
+    toast('Xəta baş verdi.','red');
+  }
+};
+
+async function deleteFlash(id){
+  if(!await uiConfirm('Bu flash sale silinsin?','Sil'))return;
+  const r=await fetch('/api/admin?action=flash-sales',{method:'DELETE',headers:H(),body:JSON.stringify({id})});
+  if(r.ok){loadFlashSales();toast('Flash sale silindi.','red');}
+}
+
+// Promo kodlar
+async function loadPromoCodes(){
+  const r=await fetch('/api/admin?action=promo-codes',{headers:H()});
+  if(r.status===401){logout();return;}
+  const list=await r.json();
+  const box=$('#promoList');
+  if(!list.length){box.innerHTML='<p class="muted">Promo kod yoxdur.</p>';return;}
+  box.innerHTML=list.map(p=>`<div class="promo-row">
+    <div><span class="code">${p.code}</span> <span class="discount">-${p.discount_percent}%</span></div>
+    <div class="muted">${p.used_count||0}/${p.max_uses||'∞'} istifadə</div>
+    <div class="muted">${p.is_active?'Aktiv':'Deaktiv'}</div>
+    <div class="actions"><button class="btn sm ${p.is_active?'red':'green'}" onclick="togglePromo(${p.id},${!p.is_active})">${p.is_active?'Deaktiv':'Aktiv'}</button></div>
+  </div>`).join('');
+}
+
+$('#addPromoBtn').onclick=()=>{$('#promoModal').classList.add('show');};
+
+$('#promoSave').onclick=async()=>{
+  const code=$('#promoCode').value.trim().toUpperCase();
+  const discount_percent=parseInt($('#promoDiscount').value)||0;
+  const min_order=Math.round(parseFloat($('#promoMin').value||0)*100);
+  const max_uses=$('#promoMaxUses').value?parseInt($('#promoMaxUses').value):null;
+  
+  if(!code||!discount_percent){toast('Kod və endirim faizi lazımdır.','red');return;}
+  
+  const r=await fetch('/api/admin?action=promo-codes',{
+    method:'POST',
+    headers:H(),
+    body:JSON.stringify({code,discount_percent,min_order,max_uses})
+  });
+  
+  if(r.ok){
+    $('#promoModal').classList.remove('show');
+    loadPromoCodes();
+    toast('Promo kod yaradıldı!','green');
+  }else{
+    const d=await r.json();
+    toast(d.error||'Xəta','red');
+  }
+};
+
+async function togglePromo(id,active){
+  const r=await fetch('/api/admin?action=promo-codes',{
+    method:'PUT',
+    headers:H(),
+    body:JSON.stringify({id,is_active:active})
+  });
+  if(r.ok){loadPromoCodes();toast(active?'Aktiv edildi':'Deaktiv edildi','green');}
+}
+
+async function setBalance(email){
+  const v=prompt(email+'\nYeni balans (₼):');
+  if(v===null)return;
+  const amount=parseFloat(v);
+  if(isNaN(amount)){toast('Düzgün rəqəm yaz.','red');return;}
+  const r=await fetch('/api/admin?action=setbalance',{
+    method:'POST',
+    headers:H(),
+    body:JSON.stringify({email,mode:'set',amount})
+  });
+  if(r.ok){loadStats();toast('Balans yeniləndi.','green');}
+}
+
+$('#loginBtn').addEventListener('click',login);
+$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+$('#logoutBtn').addEventListener('click',logout);
+
+document.addEventListener('click',async e=>{
+  if(e.target&&e.target.id==='resetOrdersBtn'){
+    if(!await uiConfirm('Bütün son sifarişlər silinsin?','Sifarişləri sıfırla'))return;
+    const r=await fetch('/api/admin?action=resetorders',{method:'POST',headers:H()});
+    if(r.ok){loadStats();toast('Sifarişlər sıfırlandı.','green');}
+  }
+});
+
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
 if(TOKEN)showDash();
 </script></body></html>

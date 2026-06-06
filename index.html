@@ -399,3 +399,748 @@ $('#logoutConfirm').onclick=async()=>{$('#logoutOverlay').classList.remove('show
 
 init();
 </script></body></html>
+
+  <div id="pass2Row" style="display:none"><label>Parolu təsdiqlə</label><input id="authPass2" type="password" placeholder="••••••••"></div>
+  <button class="btn green" style="width:100%;margin-top:14px" id="authSubmit">Davam et</button>
+  <div class="divider">və ya</div>
+  <button class="btn ghost" style="width:100%" id="googleBtn">🔵 Google ilə davam et</button>
+  <div class="msg" id="authMsg"></div>
+</div></div>
+
+<!-- TOPUP MODAL -->
+<div class="overlay" id="topupOverlay"><div class="modal">
+  <span class="x" data-close>&times;</span>
+  <h2>💰 Balans artır</h2>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">1) Aşağıdakı hesaba köçürmə et 2) Məbləği yaz 3) Qəbz şəklini yüklə → təsdiqdən sonra balansın artacaq.</p>
+  <div class="pay-info" id="payInfo">...</div>
+  <label>Məbləğ (₼)</label><input id="topAmount" type="number" step="0.01" placeholder="məs: 10">
+  <label>Qəbz şəkli (ödəniş skrinşotu)</label><input id="topFile" type="file" accept="image/*">
+  <button class="btn green" style="width:100%;margin-top:14px" id="topSubmit">Sorğu göndər</button>
+  <div class="msg" id="topMsg"></div>
+</div></div>
+
+<!-- TARİXÇƏ MODAL -->
+<div class="overlay" id="histOverlay"><div class="modal">
+  <span class="x" data-close>&times;</span>
+  <h2>🧾 Əməliyyat tarixçəsi</h2>
+  <div id="histList"><p style="color:var(--muted);font-size:.85rem">Yüklənir...</p></div>
+</div></div>
+
+<!-- MƏHSULLARIM MODAL -->
+<div class="overlay" id="myOverlay"><div class="modal">
+  <span class="x" data-close>&times;</span>
+  <h2>📦 Məhsullarım</h2>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:6px">Aldığın məhsullar burada. İstənilən vaxt yenidən yüklə.</p>
+  <div class="dl" id="myList"><p style="color:var(--muted);font-size:.85rem">Yüklənir...</p></div>
+</div></div>
+
+<!-- WISHLIST MODAL -->
+<div class="overlay" id="wishlistOverlay"><div class="modal">
+  <span class="x" data-close>&times;</span>
+  <h2>❤️ Sevimlilərim</h2>
+  <div id="wishlistList"><p style="color:var(--muted);font-size:.85rem">Yüklənir...</p></div>
+</div></div>
+
+<!-- DOWNLOADS MODAL -->
+<div class="overlay" id="dlOverlay"><div class="modal">
+  <span class="x" data-close>&times;</span>
+  <h2>🎉 Alış uğurlu!</h2>
+  <p style="font-size:.85rem;color:var(--muted)">Linklər 1 saat etibarlıdır.</p>
+  <div class="dl" id="dlList"></div>
+</div></div>
+
+<!-- TOAST BİLDİRİŞ -->
+<div class="toast" id="toast"></div>
+
+<!-- ÇIXIŞ TƏSDİQ MODAL -->
+<div class="overlay" id="logoutOverlay"><div class="modal" style="max-width:360px;text-align:center">
+  <div style="font-size:2.4rem;margin-bottom:8px">👋</div>
+  <h2 style="margin-bottom:8px">Çıxış</h2>
+  <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px">Hesabdan çıxmaq istədiyinizə əminsiniz?</p>
+  <div style="display:flex;gap:10px">
+    <button class="btn ghost" style="flex:1" id="logoutCancel">İmtina</button>
+    <button class="btn" style="flex:1;background:var(--danger)" id="logoutConfirm">Bəli, çıx</button>
+  </div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ============================================
+// ƏSAS DƏYİŞƏNLƏR
+// ============================================
+const $=s=>document.querySelector(s);
+const money=c=>(c/100).toFixed(2)+' ₼';
+let PRODUCTS=[],cart={},sb=null,session=null,CFG={};
+let topupStatuses={};
+let pollTimer=null;
+let appliedPromo=null;
+let wishlist=[];
+let flashSaleEnd=null;
+let countdownTimer=null;
+
+
+// Professional ikonlar
+const ICONS={'cv-template':'🪪','study-schedule':'📅','budget-sheet':'📊','instagram-pack':'📸','ebook-freelance':'📚'};
+function iconFor(p){return ICONS[p.id]||p.emoji||'📦';}
+
+// ============================================
+// DARK MODE
+// ============================================
+function initTheme(){
+  const saved=localStorage.getItem('theme')||'dark';
+  document.documentElement.setAttribute('data-theme',saved);
+  updateThemeIcon(saved);
+}
+function toggleTheme(){
+  const current=document.documentElement.getAttribute('data-theme');
+  const next=current==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('theme',next);
+  updateThemeIcon(next);
+}
+function updateThemeIcon(theme){
+  $('#themeToggle').textContent=theme==='dark'?'🌙':'☀️';
+}
+$('#themeToggle').onclick=toggleTheme;
+
+// ============================================
+// TOAST BİLDİRİŞ
+// ============================================
+function toast(text,type){
+  const t=$('#toast');
+  t.textContent=text;
+  t.className='toast '+(type==='red'?'red':type==='blue'?'blue':'green')+' show';
+  setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+// ============================================
+// FLASH SALE GERİ SAYIM
+// ============================================
+function startFlashCountdown(endTime){
+  if(countdownTimer)clearInterval(countdownTimer);
+  flashSaleEnd=new Date(endTime);
+  
+  function updateTimer(){
+    const now=new Date();
+    const diff=flashSaleEnd-now;
+    
+    if(diff<=0){
+      clearInterval(countdownTimer);
+      $('#flashBanner').style.display='none';
+      loadProducts();
+      return;
+    }
+    
+    const hrs=Math.floor(diff/(1000*60*60));
+    const min=Math.floor((diff%(1000*60*60))/(1000*60));
+    const sec=Math.floor((diff%(1000*60))/1000);
+    
+    $('#hrs').textContent=String(hrs).padStart(2,'0');
+    $('#min').textContent=String(min).padStart(2,'0');
+    $('#sec').textContent=String(sec).padStart(2,'0');
+  }
+  
+  updateTimer();
+  countdownTimer=setInterval(updateTimer,1000);
+  $('#flashBanner').style.display='block';
+}
+
+// ============================================
+// CHAT BOT
+// ============================================
+const CHAT_ANSWERS={
+  'balans': 'Balans artırmaq üçün: 1) Hesabınıza daxil olun 2) "+" düyməsinə basın 3) Ödəniş məlumatlarını daxil edin 4) Qəbz şəklini yükləyin. Təsdiqdən sonra balansınız avtomatik artacaq. 💰',
+  'alış': 'Məhsul almaq üçün: 1) Məhsulu səbətə atın 2) "Al (balansla)" düyməsinə basın 3) Yükləmə linkini alın. Hər alışdan xal qazanırsınız! 🛒',
+  'telegram': 'Telegram-da bizimlə əlaqə saxlamaq üçün: @onlinebeledci 📱',
+  'xal': 'Hər 1₼ alış üçün 1 xal qazanırsınız. 100 xal = 1₼ dəyərində endirim! Xalları ödəniş zamanı istifadə edə bilərsiniz. ⭐',
+  'promo': 'Promo kodları axtarış çubuğunun yanındakı "Promo kod" sahəsinə daxil edin və "Tətbiq et" düyməsinə basın. 🎁',
+  'default': 'Bağışlayın, bu suala cavab tapa bilmədim. Telegram-da @onlinebeledci ilə əlaqə saxlayın, sizə kömək edəcəyik! 📱'
+};
+
+function openChat(){
+  $('#chatPopup').classList.toggle('show');
+  $('#chatToggle').classList.toggle('active');
+}
+
+$('#chatToggle').onclick=openChat;
+
+function sendQuickMsg(msg){
+  $('#chatInput').value=msg;
+  sendChat();
+}
+
+function sendChat(){
+  const input=$('#chatInput');
+  const msg=input.value.trim();
+  if(!msg)return;
+  
+  // User mesajı əlavə et
+  addChatMsg(msg,'user');
+  input.value='';
+  
+  // Bot cavabı
+  setTimeout(()=>{
+    const lower=msg.toLowerCase();
+    let answer=CHAT_ANSWERS.default;
+    
+    if(lower.includes('balans')||lower.includes('artır')||lower.includes('balansi'))answer=CHAT_ANSWERS.balans;
+    else if(lower.includes('al')||lower.includes('məhsul')||lower.includes('alış'))answer=CHAT_ANSWERS.alış;
+    else if(lower.includes('telegram')||lower.includes('tele'))answer=CHAT_ANSWERS.telegram;
+    else if(lower.includes('xal')||lower.includes('point'))answer=CHAT_ANSWERS.xal;
+    else if(lower.includes('promo')||lower.includes('kod')||lower.includes('endirim'))answer=CHAT_ANSWERS.promo;
+    
+    addChatMsg(answer,'bot');
+  },500);
+}
+
+function addChatMsg(text,type){
+  const div=document.createElement('div');
+  div.className='chat-msg '+type;
+  div.textContent=text;
+  $('#chatBody').appendChild(div);
+  $('#chatBody').scrollTop=$('#chatBody').scrollHeight;
+}
+
+
+// ============================================
+// PROMO KOD
+// ============================================
+$('#applyPromo').onclick=async()=>{
+  const code=$('#promoCode').value.trim().toUpperCase();
+  if(!code)return toast('Promo kod daxil edin.','red');
+  
+  try{
+    const r=await fetch('/api/promo?code='+encodeURIComponent(code));
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Kod etibarsızdır');
+    
+    appliedPromo=d;
+    toast(`✓ Promo kod tətbiq olundu! ${d.discount_percent}% endirim`,'green');
+    $('#applyPromo').textContent='✓';
+    $('#applyPromo').classList.add('applied');
+    updateCart();
+  }catch(e){
+    toast(e.message,'red');
+  }
+};
+
+// ============================================
+// WISHLIST
+// ============================================
+async function toggleWishlist(productId){
+  if(!session){
+    toast('Wishlist üçün daxil olun.','red');
+    return;
+  }
+  
+  const btn=document.querySelector(`[data-wishlist="${productId}"]`);
+  const isIn=btn.classList.contains('active');
+  
+  try{
+    if(isIn){
+      await fetch('/api/wishlist',{
+        method:'DELETE',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+        body:JSON.stringify({product_id:productId})
+      });
+      btn.classList.remove('active');
+      toast('Sevimlilərdən çıxarıldı.','green');
+    }else{
+      await fetch('/api/wishlist',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+        body:JSON.stringify({product_id:productId})
+      });
+      btn.classList.add('active');
+      toast('Sevimlilərə əlavə olundu! ❤️','green');
+    }
+  }catch(e){
+    toast('Xəta baş verdi.','red');
+  }
+}
+
+async function loadWishlist(){
+  if(!session)return;
+  try{
+    const r=await fetch('/api/wishlist',{headers:{'Authorization':'Bearer '+session.access_token}});
+    const d=await r.json();
+    wishlist=d.items||[];
+    // UI-ı yenilə
+    wishlist.forEach(id=>{
+      const btn=document.querySelector(`[data-wishlist="${id}"]`);
+      if(btn)btn.classList.add('active');
+    });
+  }catch(e){}
+}
+
+// ============================================
+// REYTİNG
+// ============================================
+function renderStars(rating,count){
+  const full=Math.floor(rating);
+  let html='<div class="stars">';
+  for(let i=1;i<=5;i++){
+    html+=`<span class="${i<=full?'filled':'empty'}">★</span>`;
+  }
+  html+=`</div><span class="count">(${count})</span>`;
+  return html;
+}
+
+async function rateProduct(productId,rating){
+  if(!session){
+    toast('Reytinq vermək üçün daxil olun.','red');
+    return;
+  }
+  
+  try{
+    const r=await fetch('/api/ratings',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({product_id:productId,rating})
+    });
+    if(!r.ok)throw new Error('Xəta');
+    toast('Reytinqiniz qeydə alındı! ⭐','green');
+    loadProducts();
+  }catch(e){
+    toast('Xəta baş verdi.','red');
+  }
+}
+
+// ============================================
+// AXTARIŞ
+// ============================================
+$('#searchInput').oninput=(e)=>{
+  const q=e.target.value.toLowerCase();
+  document.querySelectorAll('.prod').forEach(el=>{
+    const name=el.querySelector('h3').textContent.toLowerCase();
+    const desc=el.querySelector('p').textContent.toLowerCase();
+    el.style.display=(name.includes(q)||desc.includes(q))?'flex':'none';
+  });
+};
+
+// ============================================
+// ƏSAS FUNKSİYALAR
+// ============================================
+async function init(){
+  initTheme();
+  $('#year').textContent=new Date().getFullYear();
+  CFG=await fetch('/api/config').then(r=>r.json()).catch(()=>({}));
+  $('#payInfo').textContent=CFG.paymentInfo||'';
+  
+  if(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase){
+    sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);
+    const {data}=await sb.auth.getSession();
+    session=data.session;
+    sb.auth.onAuthStateChange((event,s)=>{
+      const wasLoggedOut=!session;
+      session=s;refreshUser();
+      if(event==='SIGNED_IN' && s){
+        $('#authOverlay').classList.remove('show');
+        if(wasLoggedOut){
+          const nm=(s.user.user_metadata&&s.user.user_metadata.full_name)||s.user.email||'';
+          toast('Xoş gəldin'+(nm?', '+nm:'')+'! 🎉','green');
+        }
+      }
+    });
+  }
+  await loadProducts();
+  await refreshUser();
+  await loadFlashSales();
+}
+
+
+async function loadFlashSales(){
+  try{
+    const r=await fetch('/api/flash-sales');
+    const sales=await r.json();
+    if(sales.length>0){
+      const sale=sales[0];
+      startFlashCountdown(sale.ends_at);
+    }
+  }catch(e){}
+}
+
+async function loadProducts(){
+  try{
+    PRODUCTS=await fetch('/api/products').then(r=>r.json());
+    renderProducts();
+    if(session)loadWishlist();
+  }catch(e){
+    $('#grid').innerHTML='<p style="color:#f87171">Məhsullar yüklənmədi.</p>';
+  }
+}
+
+function renderProducts(){
+  $('#grid').innerHTML='';
+  PRODUCTS.forEach(p=>{
+    const inC=cart[p.id]>0;
+    const el=document.createElement('div');
+    el.className='prod';
+    
+    // Flash sale yoxlaması
+    const salePrice=p.sale_price||null;
+    const isOnSale=salePrice&&salePrice<p.price;
+    
+    el.innerHTML=`
+      <button class="wishlist-btn ${wishlist.includes(p.id)?'active':''}" data-wishlist="${p.id}" onclick="toggleWishlist('${p.id}')">♡</button>
+      ${isOnSale?'<span class="sale-badge animate-float">🔥 SALE</span>':''}
+      <div class="ico">${iconFor(p)}</div>
+      <h3>${p.name}</h3>
+      <p>${p.description||''}</p>
+      <div class="rating">${renderStars(p.rating_avg||0,p.rating_count||0)}</div>
+      <div class="price">
+        ${isOnSale?`<span class="original">${money(p.price)}</span><span class="sale">${money(salePrice)}</span>`:money(p.price)}
+        <span>birdəfəlik</span>
+      </div>
+      <button class="btn btn-add ${inC?'in added':''}" id="add-${p.id}">${inC?'✓ Səbətdə (çıxar)':'🛒 Səbətə at'}</button>
+    `;
+    
+    el.querySelector('.btn-add').addEventListener('click',()=>{
+      if(cart[p.id]){
+        delete cart[p.id];
+        el.querySelector('.btn-add').classList.remove('bouncing','added');
+      }else{
+        cart[p.id]=1;
+        const btn=el.querySelector('.btn-add');
+        btn.classList.add('bouncing');
+        setTimeout(()=>btn.classList.remove('bouncing','in'),500);
+        setTimeout(()=>btn.classList.add('added'),500);
+      }
+      renderProducts();
+      updateCart();
+    });
+    
+    // Wishlist button
+    el.querySelector('.wishlist-btn').onclick=(e)=>{
+      e.stopPropagation();
+      toggleWishlist(p.id);
+    };
+    
+    // Reytinq ulduzları klik
+    el.querySelector('.rating').onclick=(e)=>{
+      const rect=el.querySelector('.rating').getBoundingClientRect();
+      const x=e.clientX-rect.left;
+      const star=Math.ceil(x/20); // təxmini ulduz eni
+      if(star>=1&&star<=5)rateProduct(p.id,star);
+    };
+    
+    $('#grid').appendChild(el);
+  });
+}
+
+function updateCart(){
+  const ids=Object.keys(cart);
+  let total=ids.reduce((s,id)=>{
+    const p=PRODUCTS.find(x=>x.id===id);
+    const price=p?.sale_price||p?.price||0;
+    return s+price;
+  },0);
+  
+  // Promo endirimi
+  let discount=0;
+  if(appliedPromo){
+    discount=Math.floor(total*appliedPromo.discount_percent/100);
+    total-=discount;
+    $('#discountInfo').textContent=`-${appliedPromo.discount_percent}% endirim: -${money(discount)}`;
+    $('#discountInfo').style.display='block';
+  }else{
+    $('#discountInfo').style.display='none';
+  }
+  
+  $('#cartCount').textContent=ids.length;
+  $('#cartTotal').textContent=money(total);
+  $('#checkoutBtn').disabled=ids.length===0;
+}
+
+
+// ============================================
+// İSTİFADƏÇİ PANELİ
+// ============================================
+async function refreshUser(){
+  const nav=$('#navRight');
+  if(!session){
+    nav.innerHTML=`
+      <button class="theme-toggle" id="themeToggle" title="Tema dəyiş">🌙</button>
+      <button class="btn ghost sm" id="loginBtn">Daxil ol</button>
+      <button class="btn sm" id="signupBtn">Qeydiyyat</button>
+    `;
+    $('#loginBtn').onclick=()=>openAuth('login');
+    $('#signupBtn').onclick=()=>openAuth('signup');
+    $('#themeToggle').onclick=toggleTheme;
+    if(pollTimer){clearInterval(pollTimer);pollTimer=null;}
+    return;
+  }
+  
+  let bal=0,points=0;
+  try{
+    const {data}=await sb.from('profiles').select('balance').eq('id',session.user.id).single();
+    bal=data?.balance||0;
+    const {data:lp}=await sb.from('loyalty_points').select('points').eq('user_id',session.user.id).single();
+    points=lp?.points||0;
+  }catch(e){}
+  
+  const initial=(session.user.email||'?').charAt(0);
+  nav.innerHTML=`
+    <button class="theme-toggle" id="themeToggle" title="Tema dəyiş">🌙</button>
+    <span class="points-badge">⭐ ${points} xal</span>
+    <span class="bal">💰 ${money(bal)} <button class="bal-add" id="balAddBtn" title="Balans artır">+</button></span>
+    <div class="avatar-circle" title="${session.user.email||''}">${initial}</div>
+    <div class="menu-wrap">
+      <button class="menu-btn" id="menuBtn" title="Menyu"><span></span><span></span><span></span></button>
+      <div class="menu-drop" id="menuDrop">
+        <div class="uemail-full">${session.user.email||''}</div>
+        <div class="sep"></div>
+        <button id="myBtn">📦 Məhsullarım</button>
+        <button id="wishlistBtn">❤️ Sevimlilərim</button>
+        <button id="histBtn">🧾 Tarixçə</button>
+        <div class="sep"></div>
+        <button id="logoutBtn" class="danger">🚪 Çıxış</button>
+      </div>
+    </div>
+  `;
+  
+  $('#themeToggle').onclick=toggleTheme;
+  updateThemeIcon(document.documentElement.getAttribute('data-theme'));
+  $('#balAddBtn').onclick=()=>$('#topupOverlay').classList.add('show');
+  
+  const drop=$('#menuDrop');
+  $('#menuBtn').onclick=(e)=>{e.stopPropagation();drop.classList.toggle('show');};
+  document.addEventListener('click',(e)=>{if(!e.target.closest('.menu-wrap'))drop.classList.remove('show');});
+  $('#histBtn').onclick=()=>{drop.classList.remove('show');openHistory();};
+  $('#myBtn').onclick=()=>{drop.classList.remove('show');openMyProducts();};
+  $('#wishlistBtn').onclick=()=>{drop.classList.remove('show');openWishlistModal();};
+  $('#logoutBtn').onclick=()=>{drop.classList.remove('show');$('#logoutOverlay').classList.add('show');};
+  
+  startPolling();
+}
+
+// ============================================
+// AUTH
+// ============================================
+let authMode='login';
+function openAuth(mode){
+  authMode=mode;
+  $('#tabLogin').classList.toggle('active',mode==='login');
+  $('#tabSignup').classList.toggle('active',mode==='signup');
+  $('#authMsg').textContent='';
+  const sup=mode==='signup';
+  $('#nameRow').style.display=sup?'block':'none';
+  $('#pass2Row').style.display=sup?'block':'none';
+  $('#authSubmit').textContent=sup?'Qeydiyyatdan keç':'Daxil ol';
+  $('#authOverlay').classList.add('show');
+}
+
+$('#tabLogin').onclick=()=>openAuth('login');
+$('#tabSignup').onclick=()=>openAuth('signup');
+$('#authSubmit').onclick=async()=>{
+  if(!sb){$('#authMsg').textContent='Auth konfiqurasiya olunmayıb.';$('#authMsg').className='msg err';return;}
+  const email=$('#authEmail').value.trim(),pass=$('#authPass').value;
+  if(!email||!pass){$('#authMsg').textContent='Email və parol lazımdır.';$('#authMsg').className='msg err';return;}
+  let r;
+  if(authMode==='signup'){
+    const name=$('#authName').value.trim();
+    const pass2=$('#authPass2').value;
+    if(!name){$('#authMsg').textContent='Ad Soyad lazımdır.';$('#authMsg').className='msg err';return;}
+    if(pass.length<6){$('#authMsg').textContent='Parol ən azı 6 simvol olmalıdır.';$('#authMsg').className='msg err';return;}
+    if(pass!==pass2){$('#authMsg').textContent='Parollar uyğun gəlmir.';$('#authMsg').className='msg err';return;}
+    $('#authMsg').textContent='Gözləyin...';$('#authMsg').className='msg';
+    r=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+  }else{
+    $('#authMsg').textContent='Gözləyin...';$('#authMsg').className='msg';
+    r=await sb.auth.signInWithPassword({email,password:pass});
+  }
+  if(r.error){$('#authMsg').textContent=r.error.message;$('#authMsg').className='msg err';return;}
+  if(authMode==='signup'&&!r.data.session){$('#authMsg').textContent='Email-ə təsdiq linki göndərildi.';$('#authMsg').className='msg ok';return;}
+  session=r.data.session;$('#authOverlay').classList.remove('show');refreshUser();
+};
+
+$('#googleBtn').onclick=async()=>{
+  if(!sb){$('#authMsg').textContent='Google girişi üçün konfiqurasiya lazımdır.';$('#authMsg').className='msg err';return;}
+  const r=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin}});
+  if(r.error){$('#authMsg').textContent='Google girişi aktiv deyil: '+r.error.message;$('#authMsg').className='msg err';}
+};
+
+
+// ============================================
+// TARİXÇƏ
+// ============================================
+async function openHistory(){
+  $('#histOverlay').classList.add('show');
+  $('#histList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Yüklənir...</p>';
+  try{
+    const r=await fetch('/api/buy',{headers:{'Authorization':'Bearer '+session.access_token}});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Xəta');
+    const ev=d.events||[];
+    if(!ev.length){$('#histList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Hələ əməliyyat yoxdur.</p>';return;}
+    const label={pending:'Gözləyir',approved:'Təsdiqləndi',rejected:'Rədd edildi',completed:'Tamamlandı',processing:'İşlənir'};
+    $('#histList').innerHTML=ev.map(e=>{
+      if(e.type==='purchase'){
+        return `<div class="hist-row"><div><b style="color:#f87171">− ${money(e.amount)}</b><div style="font-size:.8rem;color:#cbd5e1">🛒 ${e.names||'Alış'}</div><div class="hist-date">${new Date(e.date).toLocaleString('az')}</div></div><span class="tag completed">Alındı</span></div>`;
+      }
+      const sign=e.status==='approved'?'+ ':'';
+      const col=e.status==='approved'?'#22c55e':'#94a3b8';
+      return `<div class="hist-row"><div><b style="color:${col}">${sign}${money(e.amount)}</b><div style="font-size:.8rem;color:#cbd5e1">💰 Balans artırma</div><div class="hist-date">${new Date(e.date).toLocaleString('az')}</div></div><span class="tag ${e.status}">${label[e.status]||e.status}</span></div>`;
+    }).join('');
+  }catch(e){$('#histList').innerHTML='<p style="color:#f87171;font-size:.85rem">Tarixçə yüklənmədi.</p>';}
+}
+
+// ============================================
+// MƏHSULLARIM
+// ============================================
+async function openMyProducts(){
+  $('#myOverlay').classList.add('show');
+  $('#myList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Yüklənir...</p>';
+  try{
+    const r=await fetch('/api/buy?my=1',{headers:{'Authorization':'Bearer '+session.access_token}});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Xəta');
+    const owned=d.owned||[];
+    if(!owned.length){$('#myList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Hələ məhsul almamısan.</p>';return;}
+    $('#myList').innerHTML=owned.map(p=>p.url
+      ? `<a href="${p.url}" target="_blank">${p.emoji||'📦'} ${p.name}<span style="margin-left:auto;color:var(--accent)">↓ Yüklə</span></a>`
+      : `<div class="dl"><span style="display:flex;gap:10px;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:12px 14px">${p.emoji||'📦'} ${p.name} <span style="margin-left:auto;color:var(--muted)">fayl yoxdur</span></span></div>`
+    ).join('');
+  }catch(e){$('#myList').innerHTML='<p style="color:#f87171;font-size:.85rem">Yüklənmədi.</p>';}
+}
+
+// ============================================
+// WISHLIST MODAL
+// ============================================
+async function openWishlistModal(){
+  $('#wishlistOverlay').classList.add('show');
+  $('#wishlistList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Yüklənir...</p>';
+  try{
+    const r=await fetch('/api/wishlist',{headers:{'Authorization':'Bearer '+session.access_token}});
+    const d=await r.json();
+    const items=d.items||[];
+    if(!items.length){$('#wishlistList').innerHTML='<p style="color:var(--muted);font-size:.85rem">Sevimlilər siyahısı boşdur.</p>';return;}
+    $('#wishlistList').innerHTML=items.map(id=>{
+      const p=PRODUCTS.find(x=>x.id===id);
+      if(!p)return '';
+      return `<div class="order-detail"><div class="item"><span>${iconFor(p)} ${p.name}</span><span>${money(p.price)}</span></div></div>`;
+    }).join('');
+  }catch(e){$('#wishlistList').innerHTML='<p style="color:#f87171;font-size:.85rem">Yüklənmədi.</p>';}
+}
+
+
+// ============================================
+// POLLING
+// ============================================
+function startPolling(){
+  if(pollTimer)clearInterval(pollTimer);
+  checkTopups(true);
+  pollTimer=setInterval(()=>checkTopups(false),10000);
+}
+
+async function checkTopups(first){
+  if(!session||!sb)return;
+  try{
+    const {data}=await sb.from('topups').select('id,amount,status').order('created_at',{ascending:false}).limit(20);
+    if(!data)return;
+    data.forEach(t=>{
+      const prev=topupStatuses[t.id];
+      if(!first && prev && prev!==t.status){
+        if(t.status==='approved'){toast('✅ Balansınıza '+money(t.amount)+' əlavə olundu!','green');refreshUser();}
+        else if(t.status==='rejected'){toast('❌ '+money(t.amount)+' ödəniş sorğunuz rədd edildi.','red');}
+      }
+      topupStatuses[t.id]=t.status;
+    });
+  }catch(e){}
+}
+
+// ============================================
+// TOPUP
+// ============================================
+function resizeImage(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      const max=1200;
+      let w=img.width,h=img.height;
+      if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;}}
+      const c=document.createElement('canvas');
+      c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg',0.7));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Şəkil oxunmadı'));};
+    img.src=url;
+  });
+}
+
+$('#topSubmit').onclick=async()=>{
+  if(!session){$('#topMsg').textContent='Əvvəlcə daxil ol.';$('#topMsg').className='msg err';return;}
+  const amount=$('#topAmount').value,file=$('#topFile').files[0];
+  if(!amount||!file){$('#topMsg').textContent='Məbləğ və qəbz şəkli lazımdır.';$('#topMsg').className='msg err';return;}
+  $('#topMsg').textContent='Göndərilir...';$('#topMsg').className='msg';
+  try{
+    const receipt=await resizeImage(file);
+    const r=await fetch('/api/topup',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({amount,receipt})});
+    const d=await r.json().catch(()=>({error:'Server xətası'}));
+    if(!r.ok){$('#topMsg').textContent=d.error||'Xəta';$('#topMsg').className='msg err';return;}
+    $('#topMsg').textContent=d.message||'Göndərildi!';$('#topMsg').className='msg ok';
+    $('#topAmount').value='';$('#topFile').value='';
+    checkTopups(true);
+  }catch(e){$('#topMsg').textContent='Xəta: '+e.message;$('#topMsg').className='msg err';}
+};
+
+// ============================================
+// ALIŞ (BALANSLA)
+// ============================================
+$('#checkoutBtn').onclick=async()=>{
+  if(!session){openAuth('login');return;}
+  const items=Object.keys(cart).map(id=>({id}));
+  if(!items.length)return;
+  
+  $('#checkoutBtn').disabled=true;
+  $('#checkoutBtn').textContent='Alınır...';
+  
+  const r=await fetch('/api/buy',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+    body:JSON.stringify({items,promo_code:appliedPromo?.code})
+  });
+  const d=await r.json();
+  
+  $('#checkoutBtn').textContent='Al (balansla)';
+  $('#checkoutBtn').disabled=false;
+  
+  if(r.status===402){toast('Balans kifayət etmir. Balansını artır.','red');$('#topupOverlay').classList.add('show');return;}
+  if(!r.ok){toast('Xəta: '+(d.error||''),'red');return;}
+  
+  cart={};
+  renderProducts();
+  updateCart();
+  refreshUser();
+  
+  $('#dlList').innerHTML=(d.downloads||[]).map(x=>`<a href="${x.url}" target="_blank">${iconFor(x)||'📦'} ${x.name} ↓</a>`).join('')||'<p>Yükləmə yoxdur.</p>';
+  $('#dlOverlay').classList.add('show');
+  
+  // Xal qazandığını göstər
+  if(d.points_earned){
+    toast(`✅ Alış uğurlu! +${d.points_earned} xal qazandınız! ⭐`,'green');
+  }else{
+    toast('✅ Alış uğurlu!','green');
+  }
+};
+
+// Modal bağlama
+document.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>x.closest('.overlay').classList.remove('show'));
+document.querySelectorAll('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o)o.classList.remove('show');});
+
+// Çıxış
+$('#logoutCancel').onclick=()=>$('#logoutOverlay').classList.remove('show');
+$('#logoutConfirm').onclick=async()=>{
+  $('#logoutOverlay').classList.remove('show');
+  if(sb){await sb.auth.signOut();}
+  session=null;
+  refreshUser();
+  toast('Hesabdan çıxdınız.','green');
+};
+
+// Başlat
+init();
+</script></body></html>
