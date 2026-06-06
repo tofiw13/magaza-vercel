@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
   if (action === 'stats') {
     const { data: orders } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
     const { count: productCount } = await supabase.from('products').select('*', { count: 'exact', head: true });
-    const { data: users } = await supabase.from('profiles').select('email,balance,created_at').order('balance', { ascending: false }).limit(100);
+    const { data: users } = await supabase.from('profiles').select('email,balance,points,created_at').order('balance', { ascending: false }).limit(100);
     const userList = users || [];
     const list = orders || [];
     return res.json({
@@ -134,6 +134,24 @@ module.exports = async (req, res) => {
     const { error: e2 } = await supabase.from('profiles').update({ balance: newBalance }).eq('id', prof.id);
     if (e2) return res.status(500).json({ error: e2.message });
     return res.json({ ok: true, email, newBalance });
+  }
+
+  // --- SETPOINTS (istifadəçinin ulduz/sadiqlik xallarını idarə et) ---
+  if (action === 'setpoints') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'POST lazımdır.' });
+    const email = (req.body?.email || '').trim();
+    const mode = req.body?.mode; // 'set' | 'add'
+    const amount = Number(req.body?.amount);
+    if (!email || !['set', 'add'].includes(mode) || isNaN(amount)) {
+      return res.status(400).json({ error: 'email, mode və amount lazımdır.' });
+    }
+    const { data: prof, error: e1 } = await supabase.from('profiles').select('id,points').eq('email', email).single();
+    if (e1 || !prof) return res.status(404).json({ error: 'Bu email ilə istifadəçi tapılmadı.' });
+    let newPoints = mode === 'set' ? Math.round(amount) : (prof.points || 0) + Math.round(amount);
+    if (newPoints < 0) newPoints = 0;
+    const { error: e2 } = await supabase.from('profiles').update({ points: newPoints }).eq('id', prof.id);
+    if (e2) return res.status(500).json({ error: e2.message });
+    return res.json({ ok: true, email, newPoints });
   }
 
   // --- PROMOS (kupon idarəetməsi: GET/POST/DELETE) ---
